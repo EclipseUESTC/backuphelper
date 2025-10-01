@@ -1,2 +1,35 @@
-# backuphelper
-comprehensive software development lab
+# 数据备份与还原软件 (C++版本)
+
+一款基于C++开发的支持多种文件类型、元数据保留、自定义筛选、打包、压缩、加密和图形界面的本地数据备份与还原工具。
+
+## 🚀 功能特性
+
+- **基本功能**
+  - 数据备份：将目录树备份到指定位置
+  - 数据还原：从备份位置恢复到指定目录
+
+- **扩展功能**
+  - 支持特殊文件类型（符号链接、管道等）
+  - 保留文件元数据（权限、时间、属主等）
+  - 自定义备份筛选（路径、类型、名称、时间、大小）
+  - 打包解包：将所有文件合并为单个备份文件
+  - 压缩解压：支持 Haff / LZ77 压缩算法
+  - 加密解密：支持 AES / DES 加密
+  - 图形界面：基于 Qt 的友好界面
+
+## 🛠️ 安装与运行
+
+### 环境要求
+- C++17 兼容编译器 (GCC 9+, Clang 10+, MSVC 2019+)
+- CMake 3.16+
+- Qt 5.15+ (图形界面)
+- 系统依赖：Windows
+
+### 构建步骤
+```bash
+git clone [<项目地址>](https://github.com/EclipseUESTC/backuphelper.git)
+cd <项目目录>
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+./backup_tool
