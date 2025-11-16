@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <fstream>
 #include <system_error>
-#include "Logger.hpp"
 
 namespace fs = std::filesystem;
 
