@@ -1,4 +1,3 @@
-// src/utils/FileSystem.cpp
 #include "FileSystem.hpp"
 #include <iostream>  // 仅用于调试（可选），正式版可移除
 #include <stdexcept>
@@ -13,8 +12,17 @@ bool FileSystem::exists(const std::string& path) {
 }
 
 bool FileSystem::createDirectories(const std::string& path) {
+    // 如果目录已存在，直接返回成功
     std::error_code ec;
+    if (fs::exists(path, ec) && fs::is_directory(path, ec)) {
+        return true;
+    }
+    
+    // 否则创建目录
     bool result = fs::create_directories(path, ec);
+    if (ec) {
+        std::cerr << "Error: Failed to create directories for " << path << " (" << ec.message() << ")" << std::endl;
+    }
     return result && !ec;
 }
 
@@ -23,13 +31,18 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     fs::path destPath(destination);
     if (!destPath.parent_path().empty()) {
         if (!createDirectories(destPath.parent_path().string())) {
+            std::cerr << "Error: Failed to create directories for " << destPath.parent_path().string() << std::endl;
             return false;
         }
     }
 
     std::error_code ec;
     fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec);
-    return !ec;
+    if (ec) {
+        std::cerr << "Error: Failed to copy file from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
+        return false;
+    }
+    return true;
 }
 
 std::vector<std::string> FileSystem::getAllFiles(const std::string& directory) {

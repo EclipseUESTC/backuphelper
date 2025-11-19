@@ -1,25 +1,32 @@
 #include "BackUpTask.hpp"
-#include "../utils/FileSystem.hpp"
+#include "../../utils/FileSystem.hpp"
 #include <filesystem>
 
 BackupTask::BackupTask(const std::string& source, const std::string& backup, ILogger* log)
     : sourcePath(source), backupPath(backup), logger(log), status(TaskStatus::PENDING) {}
 
 bool BackupTask::execute() {
-    logger->info("开始备份: " + sourcePath + " -> " + backupPath);
+    logger->info("Starting backup: " + sourcePath + " -> " + backupPath);
     status = TaskStatus::RUNNING;
     
     if (!FileSystem::exists(sourcePath)) {
-        logger->error("源目录不存在: " + sourcePath);
+        logger->error("Source directory not found: " + sourcePath);
+        status = TaskStatus::FAILED;
+        return false;
+    }
+    
+    // 先确保顶级备份目录存在
+    if (!FileSystem::createDirectories(backupPath)) {
+        logger->error("Failed to create base backup directory: " + backupPath);
         status = TaskStatus::FAILED;
         return false;
     }
     
     auto files = FileSystem::getAllFiles(sourcePath);
-    logger->info("找到 " + std::to_string(files.size()) + " 个文件需要备份");
+    logger->info("Found " + std::to_string(files.size()) + " files to backup");
     
     if (files.empty()) {
-        logger->warn("没有找到需要备份的文件");
+        logger->warn("No files found to backup");
         status = TaskStatus::COMPLETED;
         return true;
     }
@@ -30,23 +37,25 @@ bool BackupTask::execute() {
     
     for (const auto& file : files) {
         std::string relativePath = FileSystem::getRelativePath(file, sourcePath);
-        std::string backupFile = (fs::path(backupPath) / relativePath).string();
+        std::string backupFile = (std::filesystem::path(backupPath) / relativePath).string();
         
-        if (!FileSystem::createDirectories(
-                std::filesystem::path(backupFile).parent_path().string())) {
-            logger->error("无法创建目标目录: " + backupFile);
+        // 获取父目录路径
+        std::string parentDir = std::filesystem::path(backupFile).parent_path().string();
+        
+        if (!parentDir.empty() && !FileSystem::createDirectories(parentDir)) {
+            logger->error("Failed to create target directory: " + parentDir);
             status = TaskStatus::FAILED;
             return false;
         }
 
         if (!FileSystem::copyFile(file, backupFile)) {
-            logger->error("复制失败: " + file + " -> " + backupFile);
+            logger->error("Copy failed: " + file + " -> " + backupFile);
             status = TaskStatus::FAILED;
             return false;
         }
     }
     
-    logger->info("备份完成!");
+    logger->info("Backup completed!");
     status = TaskStatus::COMPLETED;
     return true;
 }

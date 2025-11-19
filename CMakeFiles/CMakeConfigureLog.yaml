@@ -1,0 +1,1502 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineSystem.cmake:212 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Windows - 10.0.26100 - AMD64
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:462 (find_file)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:500 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCCompilerId.c.in"
+    candidate_directories:
+      - "S:/CMake/share/cmake-4.2/Modules/"
+    found: "S:/CMake/share/cmake-4.2/Modules/CMakeCCompilerId.c.in"
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.13.19+0d9f5a35a
+      鐢熸垚鍚姩鏃堕棿涓?2025/11/17 15:43:43銆?
+      
+      鑺傜偣 1 涓婄殑椤圭洰鈥淪:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)銆?
+      PrepareForBuild:
+        姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\鈥濄€?
+        宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
+        姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\CompilerIdC.tlog\\鈥濄€?
+      InitializeBuildStatus:
+        姝ｅ湪鍒涘缓鈥淒ebug\\CompilerIdC.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+        姝ｅ湪瀵光€淒ebug\\CompilerIdC.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+      ClCompile:
+        S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TC /FC /errorReport:queue CMakeCCompilerId.c
+        CMakeCCompilerId.c
+      Link:
+        S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdC.lib" /MACHINE:X64 Debug\\CMakeCCompilerId.obj
+        CompilerIdC.vcxproj -> S:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdC\\CompilerIdC.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_C_COMPILER=S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        姝ｅ湪鍒犻櫎鏂囦欢鈥淒ebug\\CompilerIdC.tlog\\unsuccessfulbuild鈥濄€?
+        姝ｅ湪瀵光€淒ebug\\CompilerIdC.tlog\\CompilerIdC.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+      宸插畬鎴愮敓鎴愰」鐩€淪:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+      
+      宸叉垚鍔熺敓鎴愩€?
+          0 涓鍛?
+          0 涓敊璇?
+      
+      宸茬敤鏃堕棿 00:00:04.79
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+      
+      The C compiler identification is MSVC, found in:
+        S:/code/backuphelper/CMakeFiles/4.2.0-rc3/CompilerIdC/CompilerIdC.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:103 (__resolve_linker_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/link.com"
+    found: "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link.com"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link.exe"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link"
+      - "S:/vmware/bin/lld-link.com"
+      - "S:/vmware/bin/lld-link.exe"
+      - "S:/vmware/bin/lld-link"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link.com"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link.exe"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "S:/anaconda/lld-link.com"
+      - "S:/anaconda/lld-link.exe"
+      - "S:/anaconda/lld-link"
+      - "S:/anaconda/Scripts/lld-link.com"
+      - "S:/anaconda/Scripts/lld-link.exe"
+      - "S:/anaconda/Scripts/lld-link"
+      - "S:/anaconda/Library/bin/lld-link.com"
+      - "S:/anaconda/Library/bin/lld-link.exe"
+      - "S:/anaconda/Library/bin/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link"
+      - "S:/Git/cmd/lld-link.com"
+      - "S:/Git/cmd/lld-link.exe"
+      - "S:/Git/cmd/lld-link"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link.com"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link.exe"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "S:/CMake/bin/lld-link.com"
+      - "S:/CMake/bin/lld-link.exe"
+      - "S:/CMake/bin/lld-link"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link.com"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link.exe"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link"
+      - "C:/msys64/ucrt64/bin/lld-link.com"
+      - "C:/msys64/ucrt64/bin/lld-link.exe"
+      - "C:/msys64/ucrt64/bin/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link.com"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link.exe"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "CMAKE_LINKER"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/link.com"
+    found: "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "CMAKE_MT"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "mt"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/mt.com"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/mt.exe"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/mt"
+      - "S:/vmware/bin/mt.com"
+      - "S:/vmware/bin/mt.exe"
+      - "S:/vmware/bin/mt"
+      - "C:/Program Files/Microsoft MPI/Bin/mt.com"
+      - "C:/Program Files/Microsoft MPI/Bin/mt.exe"
+      - "C:/Program Files/Microsoft MPI/Bin/mt"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/mt.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/mt.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/mt"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/mt.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/mt.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/mt"
+      - "C:/Windows/System32/mt.com"
+      - "C:/Windows/System32/mt.exe"
+      - "C:/Windows/System32/mt"
+      - "C:/Windows/mt.com"
+      - "C:/Windows/mt.exe"
+      - "C:/Windows/mt"
+      - "C:/Windows/System32/wbem/mt.com"
+      - "C:/Windows/System32/wbem/mt.exe"
+      - "C:/Windows/System32/wbem/mt"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt"
+      - "C:/Windows/System32/OpenSSH/mt.com"
+      - "C:/Windows/System32/OpenSSH/mt.exe"
+      - "C:/Windows/System32/OpenSSH/mt"
+      - "S:/anaconda/mt.com"
+      - "S:/anaconda/mt.exe"
+      - "S:/anaconda/mt"
+      - "S:/anaconda/Scripts/mt.com"
+      - "S:/anaconda/Scripts/mt.exe"
+      - "S:/anaconda/Scripts/mt"
+      - "S:/anaconda/Library/bin/mt.com"
+      - "S:/anaconda/Library/bin/mt.exe"
+      - "S:/anaconda/Library/bin/mt"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/mt.com"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/mt.exe"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/mt"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/mt.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/mt.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/mt"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/mt.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/mt.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/mt"
+      - "S:/Git/cmd/mt.com"
+      - "S:/Git/cmd/mt.exe"
+      - "S:/Git/cmd/mt"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/mt.com"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/mt.exe"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/mt"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/mt.com"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/mt.exe"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/mt"
+      - "C:/Program Files/dotnet/mt.com"
+      - "C:/Program Files/dotnet/mt.exe"
+      - "C:/Program Files/dotnet/mt"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt"
+      - "S:/CMake/bin/mt.com"
+      - "S:/CMake/bin/mt.exe"
+      - "S:/CMake/bin/mt"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/mt.com"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/mt.exe"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/mt"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/mt.com"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/mt.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/mt"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/mt.com"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/mt.exe"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/mt"
+      - "C:/msys64/ucrt64/bin/mt.com"
+      - "C:/msys64/ucrt64/bin/mt.exe"
+      - "C:/msys64/ucrt64/bin/mt"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/mt.com"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/mt.exe"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/mt"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/mt.com"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/mt.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/mt"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/mt.com"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/mt.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/mt"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/mt.com"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/mt.exe"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/mt"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "CMAKE_AR"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lib"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lib.com"
+    found: "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lib.exe"
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:462 (find_file)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:500 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCXXCompilerId.cpp.in"
+    candidate_directories:
+      - "S:/CMake/share/cmake-4.2/Modules/"
+    found: "S:/CMake/share/cmake-4.2/Modules/CMakeCXXCompilerId.cpp.in"
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.13.19+0d9f5a35a
+      鐢熸垚鍚姩鏃堕棿涓?2025/11/17 15:43:48銆?
+      
+      鑺傜偣 1 涓婄殑椤圭洰鈥淪:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)銆?
+      PrepareForBuild:
+        姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\鈥濄€?
+        宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
+        姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\CompilerIdCXX.tlog\\鈥濄€?
+      InitializeBuildStatus:
+        姝ｅ湪鍒涘缓鈥淒ebug\\CompilerIdCXX.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+        姝ｅ湪瀵光€淒ebug\\CompilerIdCXX.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+      ClCompile:
+        S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        CMakeCXXCompilerId.cpp
+      Link:
+        S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> S:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdCXX\\CompilerIdCXX.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_CXX_COMPILER=S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        姝ｅ湪鍒犻櫎鏂囦欢鈥淒ebug\\CompilerIdCXX.tlog\\unsuccessfulbuild鈥濄€?
+        姝ｅ湪瀵光€淒ebug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+      宸插畬鎴愮敓鎴愰」鐩€淪:\\code\\backuphelper\\CMakeFiles\\4.2.0-rc3\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+      
+      宸叉垚鍔熺敓鎴愩€?
+          0 涓鍛?
+          0 涓敊璇?
+      
+      宸茬敤鏃堕棿 00:00:01.03
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+      
+      The CXX compiler identification is MSVC, found in:
+        S:/code/backuphelper/CMakeFiles/4.2.0-rc3/CompilerIdCXX/CompilerIdCXX.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCXXCompiler.cmake:206 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/"
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+    searched_directories:
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link.com"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link.exe"
+      - "S:/VS/VC/Tools/MSVC/14.43.34808/bin/Hostx64/x64/lld-link"
+      - "S:/vmware/bin/lld-link.com"
+      - "S:/vmware/bin/lld-link.exe"
+      - "S:/vmware/bin/lld-link"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link.com"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link.exe"
+      - "C:/Program Files/Microsoft MPI/Bin/lld-link"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "S:/anaconda/lld-link.com"
+      - "S:/anaconda/lld-link.exe"
+      - "S:/anaconda/lld-link"
+      - "S:/anaconda/Scripts/lld-link.com"
+      - "S:/anaconda/Scripts/lld-link.exe"
+      - "S:/anaconda/Scripts/lld-link"
+      - "S:/anaconda/Library/bin/lld-link.com"
+      - "S:/anaconda/Library/bin/lld-link.exe"
+      - "S:/anaconda/Library/bin/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/lld-link"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/lld-link"
+      - "S:/Git/cmd/lld-link.com"
+      - "S:/Git/cmd/lld-link.exe"
+      - "S:/Git/cmd/lld-link"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link.com"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link.exe"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/lld-link"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "S:/CMake/bin/lld-link.com"
+      - "S:/CMake/bin/lld-link.exe"
+      - "S:/CMake/bin/lld-link"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link.com"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link.exe"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/lld-link"
+      - "C:/msys64/ucrt64/bin/lld-link.com"
+      - "C:/msys64/ucrt64/bin/lld-link.exe"
+      - "C:/msys64/ucrt64/bin/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/lld-link"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link.com"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/lld-link"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link.com"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link.exe"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineRCCompiler.cmake:40 (find_program)"
+      - "S:/CMake/share/cmake-4.2/Modules/Platform/Windows-MSVC.cmake:580 (enable_language)"
+      - "S:/CMake/share/cmake-4.2/Modules/Platform/Windows-MSVC.cmake:553 (__windows_compiler_msvc_enable_rc)"
+      - "S:/CMake/share/cmake-4.2/Modules/Platform/Windows-MSVC-C.cmake:5 (__windows_compiler_msvc)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeCInformation.cmake:48 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "program"
+    variable: "CMAKE_RC_COMPILER"
+    description: "RC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "rc"
+    candidate_directories:
+      - "S:/vmware/bin/"
+      - "C:/Program Files/Microsoft MPI/Bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "S:/anaconda/"
+      - "S:/anaconda/Scripts/"
+      - "S:/anaconda/Library/bin/"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/"
+      - "S:/Git/cmd/"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "S:/CMake/bin/"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/"
+      - "C:/msys64/ucrt64/bin/"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Program Files/bin/"
+      - "C:/Program Files/sbin/"
+      - "C:/Program Files/"
+      - "C:/Program Files (x86)/bin/"
+      - "C:/Program Files (x86)/sbin/"
+      - "C:/Program Files (x86)/"
+      - "S:/CMake/bin/"
+      - "S:/CMake/sbin/"
+      - "S:/CMake/"
+      - "C:/Program Files (x86)/BackupHelper/bin/"
+      - "C:/Program Files (x86)/BackupHelper/sbin/"
+      - "C:/Program Files (x86)/BackupHelper/"
+    searched_directories:
+      - "S:/vmware/bin/rc.com"
+      - "S:/vmware/bin/rc.exe"
+      - "S:/vmware/bin/rc"
+      - "C:/Program Files/Microsoft MPI/Bin/rc.com"
+      - "C:/Program Files/Microsoft MPI/Bin/rc.exe"
+      - "C:/Program Files/Microsoft MPI/Bin/rc"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/rc.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/rc.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/rc"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/rc.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/rc.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/libnvvp/rc"
+      - "C:/Windows/System32/rc.com"
+      - "C:/Windows/System32/rc.exe"
+      - "C:/Windows/System32/rc"
+      - "C:/Windows/rc.com"
+      - "C:/Windows/rc.exe"
+      - "C:/Windows/rc"
+      - "C:/Windows/System32/wbem/rc.com"
+      - "C:/Windows/System32/wbem/rc.exe"
+      - "C:/Windows/System32/wbem/rc"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc"
+      - "C:/Windows/System32/OpenSSH/rc.com"
+      - "C:/Windows/System32/OpenSSH/rc.exe"
+      - "C:/Windows/System32/OpenSSH/rc"
+      - "S:/anaconda/rc.com"
+      - "S:/anaconda/rc.exe"
+      - "S:/anaconda/rc"
+      - "S:/anaconda/Scripts/rc.com"
+      - "S:/anaconda/Scripts/rc.exe"
+      - "S:/anaconda/Scripts/rc"
+      - "S:/anaconda/Library/bin/rc.com"
+      - "S:/anaconda/Library/bin/rc.exe"
+      - "S:/anaconda/Library/bin/rc"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/rc.com"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/rc.exe"
+      - "C:/Program Files/NVIDIA Corporation/Nsight Compute 2024.3.0/rc"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/rc.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/rc.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/rc"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/rc.com"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/rc.exe"
+      - "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/rc"
+      - "S:/Git/cmd/rc.com"
+      - "S:/Git/cmd/rc.exe"
+      - "S:/Git/cmd/rc"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/rc.com"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/rc.exe"
+      - "C:/Program Files (x86)/Microsoft SDKs/MPI/Include/rc"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/rc.com"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/rc.exe"
+      - "S:/Windows Kits/10/Windows Performance Toolkit/rc"
+      - "C:/Program Files/dotnet/rc.com"
+      - "C:/Program Files/dotnet/rc.exe"
+      - "C:/Program Files/dotnet/rc"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc"
+      - "S:/CMake/bin/rc.com"
+      - "S:/CMake/bin/rc.exe"
+      - "S:/CMake/bin/rc"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/rc.com"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/rc.exe"
+      - "C:/Users/12138/AppData/Local/Microsoft/WindowsApps/rc"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/rc.com"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/rc.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Microsoft VS Code/bin/rc"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/rc.com"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/rc.exe"
+      - "S:/Pycharm/PyCharm Community Edition 2024.2/bin/rc"
+      - "C:/msys64/ucrt64/bin/rc.com"
+      - "C:/msys64/ucrt64/bin/rc.exe"
+      - "C:/msys64/ucrt64/bin/rc"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/rc.com"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/rc.exe"
+      - "C:/Users/12138/AppData/Local/Programs/MiKTeX/miktex/bin/x64/rc"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/rc.com"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/rc.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Ollama/rc"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/rc.com"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/rc.exe"
+      - "C:/Users/12138/AppData/Local/Programs/Qoder/bin/rc"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/rc.com"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/rc.exe"
+      - "C:/Users/12138/AppData/Roaming/Trae CN/User/globalStorage/github.copilot-chat/debugCommand/rc"
+      - "C:/Program Files/bin/rc.com"
+      - "C:/Program Files/bin/rc.exe"
+      - "C:/Program Files/bin/rc"
+      - "C:/Program Files/sbin/rc.com"
+      - "C:/Program Files/sbin/rc.exe"
+      - "C:/Program Files/sbin/rc"
+      - "C:/Program Files/rc.com"
+      - "C:/Program Files/rc.exe"
+      - "C:/Program Files/rc"
+      - "C:/Program Files (x86)/bin/rc.com"
+      - "C:/Program Files (x86)/bin/rc.exe"
+      - "C:/Program Files (x86)/bin/rc"
+      - "C:/Program Files (x86)/sbin/rc.com"
+      - "C:/Program Files (x86)/sbin/rc.exe"
+      - "C:/Program Files (x86)/sbin/rc"
+      - "C:/Program Files (x86)/rc.com"
+      - "C:/Program Files (x86)/rc.exe"
+      - "C:/Program Files (x86)/rc"
+      - "S:/CMake/bin/rc.com"
+      - "S:/CMake/bin/rc.exe"
+      - "S:/CMake/bin/rc"
+      - "S:/CMake/sbin/rc.com"
+      - "S:/CMake/sbin/rc.exe"
+      - "S:/CMake/sbin/rc"
+      - "S:/CMake/rc.com"
+      - "S:/CMake/rc.exe"
+      - "S:/CMake/rc"
+      - "C:/Program Files (x86)/BackupHelper/bin/rc.com"
+      - "C:/Program Files (x86)/BackupHelper/bin/rc.exe"
+      - "C:/Program Files (x86)/BackupHelper/bin/rc"
+      - "C:/Program Files (x86)/BackupHelper/sbin/rc.com"
+      - "C:/Program Files (x86)/BackupHelper/sbin/rc.exe"
+      - "C:/Program Files (x86)/BackupHelper/sbin/rc"
+      - "C:/Program Files (x86)/BackupHelper/rc.com"
+      - "C:/Program Files (x86)/BackupHelper/rc.exe"
+      - "C:/Program Files (x86)/BackupHelper/rc"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "S:\\vmware\\bin\\"
+        - "C:\\Program Files\\Microsoft MPI\\Bin\\"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\bin"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\libnvvp"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "S:\\anaconda"
+        - "S:\\anaconda\\Scripts"
+        - "S:\\anaconda\\Library\\bin"
+        - "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2024.3.0\\"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.6\\lib\\x64"
+        - "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+        - "S:\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"
+        - "S:\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "S:\\CMake\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "S:\\Pycharm\\PyCharm Community Edition 2024.2\\bin"
+        - "C:\\msys64\\ucrt64\\bin"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\12138\\AppData\\Local\\Programs\\Qoder\\bin"
+        - "c:\\Users\\12138\\AppData\\Roaming\\Trae CN\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/BackupHelper"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "C:/Program Files"
+        - "C:/Program Files (x86)"
+        - "S:/CMake"
+        - "C:/Program Files (x86)/BackupHelper"
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-2723ht"
+      binary: "S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-2723ht"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-2723ht'
+        
+        Run Build Command(s): S:/VS/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_31f5d.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.13.19+0d9f5a35a
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/17 15:43:49銆?
+        
+        鑺傜偣 1 涓婄殑椤圭洰鈥淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-2723ht\\cmTC_31f5d.vcxproj鈥?榛樿鐩爣)銆?
+        PrepareForBuild:
+          宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
+          姝ｅ湪鍒涘缓鐩綍鈥淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-2723ht\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_31f5d.dir\\Debug\\cmTC_31f5d.tlog\\鈥濄€?
+        InitializeBuildStatus:
+          姝ｅ湪鍒涘缓鈥渃mTC_31f5d.dir\\Debug\\cmTC_31f5d.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_31f5d.dir\\Debug\\cmTC_31f5d.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+        ClCompile:
+          S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_31f5d.dir\\Debug\\\\" /Fd"cmTC_31f5d.dir\\Debug\\vc143.pdb" /external:W1 /TC /errorReport:queue "S:\\CMake\\share\\cmake-4.2\\Modules\\CMakeCCompilerABI.c"
+          鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.43.34809 鐗?
+          鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_31f5d.dir\\Debug\\\\" /Fd"cmTC_31f5d.dir\\Debug\\vc143.pdb" /external:W1 /TC /errorReport:queue "S:\\CMake\\share\\cmake-4.2\\Modules\\CMakeCCompilerABI.c"
+          CMakeCCompilerABI.c
+        Link:
+          S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /OUT:"S:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-2723ht\\Debug\\cmTC_31f5d.exe" /INCREMENTAL /ILK:"cmTC_31f5d.dir\\Debug\\cmTC_31f5d.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-2723ht/Debug/cmTC_31f5d.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-2723ht/Debug/cmTC_31f5d.lib" /MACHINE:X64  /machine:x64 cmTC_31f5d.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_31f5d.vcxproj -> S:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-2723ht\\Debug\\cmTC_31f5d.exe
+        FinalizeBuildStatus:
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_31f5d.dir\\Debug\\cmTC_31f5d.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_31f5d.dir\\Debug\\cmTC_31f5d.tlog\\cmTC_31f5d.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-2723ht\\cmTC_31f5d.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+        
+        宸叉垚鍔熺敓鎴愩€?
+            0 涓鍛?
+            0 涓敊璇?
+        
+        宸茬敤鏃堕棿 00:00:00.94
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'C': S:/VS/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the C compiler's linker: "S:/VS/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.43.34809.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-y055i3"
+      binary: "S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-y055i3"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /GR /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-y055i3'
+        
+        Run Build Command(s): S:/VS/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_ab36d.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.13.19+0d9f5a35a
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/17 15:43:51銆?
+        
+        鑺傜偣 1 涓婄殑椤圭洰鈥淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-y055i3\\cmTC_ab36d.vcxproj鈥?榛樿鐩爣)銆?
+        PrepareForBuild:
+          宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
+          姝ｅ湪鍒涘缓鐩綍鈥淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-y055i3\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_ab36d.dir\\Debug\\cmTC_ab36d.tlog\\鈥濄€?
+        InitializeBuildStatus:
+          姝ｅ湪鍒涘缓鈥渃mTC_ab36d.dir\\Debug\\cmTC_ab36d.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_ab36d.dir\\Debug\\cmTC_ab36d.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+        ClCompile:
+          S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_ab36d.dir\\Debug\\\\" /Fd"cmTC_ab36d.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "S:\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
+          鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.43.34809 鐗?
+          鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_ab36d.dir\\Debug\\\\" /Fd"cmTC_ab36d.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "S:\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
+          CMakeCXXCompilerABI.cpp
+        Link:
+          S:\\VS\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /OUT:"S:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-y055i3\\Debug\\cmTC_ab36d.exe" /INCREMENTAL /ILK:"cmTC_ab36d.dir\\Debug\\cmTC_ab36d.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-y055i3/Debug/cmTC_ab36d.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"S:/code/backuphelper/CMakeFiles/CMakeScratch/TryCompile-y055i3/Debug/cmTC_ab36d.lib" /MACHINE:X64  /machine:x64 cmTC_ab36d.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_ab36d.vcxproj -> S:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-y055i3\\Debug\\cmTC_ab36d.exe
+        FinalizeBuildStatus:
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_ab36d.dir\\Debug\\cmTC_ab36d.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_ab36d.dir\\Debug\\cmTC_ab36d.tlog\\cmTC_ab36d.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淪:\\code\\backuphelper\\CMakeFiles\\CMakeScratch\\TryCompile-y055i3\\cmTC_ab36d.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+        
+        宸叉垚鍔熺敓鎴愩€?
+            0 涓鍛?
+            0 涓敊璇?
+        
+        宸茬敤鏃堕棿 00:00:00.98
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': S:/VS/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "S:/CMake/share/cmake-4.2/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "S:/CMake/share/cmake-4.2/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the CXX compiler's linker: "S:/VS/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.43.34809.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+...
