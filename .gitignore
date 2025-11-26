@@ -39,3 +39,46 @@
 
 # debug information files
 *.dwo
+
+# CMake build directories
+build/
+x64/
+
+# IDE files
+.vscode/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.suo
+*.user
+
+# Generated files by CMake
+cmake_install.cmake
+CTestTestfile.cmake
+CMakeCache.txt
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.swp
+*.swo
+
+# Package directories
+bin/
+lib/
+
+# UML diagrams (large binary files)
+*.png
+*.mdj
+
+*.tlog

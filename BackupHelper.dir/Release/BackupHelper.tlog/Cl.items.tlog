@@ -1,8 +1,0 @@
-S:\code\backuphelper\src\core\BackupEngine.cpp;S:\code\backuphelper\BackupHelper.dir\Release\BackupEngine.obj
-S:\code\backuphelper\src\core\DataProcessor.cpp;S:\code\backuphelper\BackupHelper.dir\Release\DataProcessor.obj
-S:\code\backuphelper\src\core\models\FileInfo.cpp;S:\code\backuphelper\BackupHelper.dir\Release\FileInfo.obj
-S:\code\backuphelper\src\core\tasks\BackupTask.cpp;S:\code\backuphelper\BackupHelper.dir\Release\BackupTask.obj
-S:\code\backuphelper\src\core\tasks\RestoreTask.cpp;S:\code\backuphelper\BackupHelper.dir\Release\RestoreTask.obj
-S:\code\backuphelper\src\main.cpp;S:\code\backuphelper\BackupHelper.dir\Release\main.obj
-S:\code\backuphelper\src\utils\ConsoleLogger.cpp;S:\code\backuphelper\BackupHelper.dir\Release\ConsoleLogger.obj
-S:\code\backuphelper\src\utils\FileSystem.cpp;S:\code\backuphelper\BackupHelper.dir\Release\FileSystem.obj
