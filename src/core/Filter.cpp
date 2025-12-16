@@ -1,4 +1,3 @@
-#pragma once
 #include "Filter.hpp"
 #include <ctime> // 用于std::localtime和std::strftime
 

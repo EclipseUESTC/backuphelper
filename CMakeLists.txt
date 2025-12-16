@@ -12,6 +12,11 @@ else()
 endif()
 enable_testing()
 
+# === 打包配置 ===
+set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+include(CPack)
+
 # Google Test配置
 include(FetchContent)
 FetchContent_Declare(
@@ -48,6 +53,7 @@ add_executable(FilterTests
     src/core/models/File.cpp 
     src/utils/ConsoleLogger.cpp 
     src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
 )
 target_include_directories(FilterTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
@@ -68,3 +74,18 @@ endif()
 # 注册测试
 add_test(NAME FilterTests COMMAND FilterTests)
 message(STATUS "已添加测试: FilterTests")
+
+# 主应用程序目标
+add_executable(BackupHelper
+    src/main.cpp
+    src/core/BackupEngine.cpp
+    src/core/Filter.cpp
+    src/core/models/File.cpp
+    src/core/tasks/BackupTask.cpp
+    src/core/tasks/RestoreTask.cpp
+    src/utils/ConsoleLogger.cpp
+    src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
+)
+
+target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)

@@ -1,4 +1,6 @@
 #include "FileSystem.hpp"
+#include "../core/models/File.hpp"
+#include "HuffmanCompressor.hpp"
 #include <iostream>  // 仅用于调试（可选），正式版可移除
 #include <stdexcept>
 
@@ -45,8 +47,8 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     return true;
 }
 
-std::vector<std::string> FileSystem::getAllFiles(const std::string& directory) {
-    std::vector<std::string> files;
+std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
+    std::vector<File> files;
     std::error_code ec;
 
     if (!fs::exists(directory, ec) || !fs::is_directory(directory, ec)) {
@@ -57,7 +59,7 @@ std::vector<std::string> FileSystem::getAllFiles(const std::string& directory) {
         for (const auto& entry : fs::recursive_directory_iterator(directory, ec)) {
             if (ec) break;
             if (entry.is_regular_file()) {
-                files.push_back(entry.path().string());
+                files.emplace_back(entry.path());
             }
         }
     } catch (const fs::filesystem_error&) {
@@ -86,4 +88,24 @@ std::string FileSystem::getRelativePath(const std::string& path, const std::stri
         // 若无法计算相对路径，返回原路径（或 basename）
         return fs::path(path).filename().string();
     }
+}
+
+bool FileSystem::compressFile(const std::string& source, const std::string& destination) {
+    HuffmanCompressor compressor;
+    return compressor.compressFile(source, destination);
+}
+
+bool FileSystem::decompressFile(const std::string& source, const std::string& destination) {
+    HuffmanCompressor compressor;
+    return compressor.decompressFile(source, destination);
+}
+
+bool FileSystem::copyAndCompressFile(const std::string& source, const std::string& destination) {
+    // 使用HuffmanCompressor压缩文件
+    return compressFile(source, destination);
+}
+
+bool FileSystem::decompressAndCopyFile(const std::string& source, const std::string& destination) {
+    // 使用HuffmanCompressor解压文件
+    return decompressFile(source, destination);
 }
