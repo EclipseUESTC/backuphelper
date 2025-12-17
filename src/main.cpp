@@ -8,6 +8,7 @@
 #include "core/BackupEngine.hpp"
 #include "core/Filter.hpp"
 #include "utils/ConsoleLogger.hpp"
+#include "utils/FileSystem.hpp"
 
 // 配置结构体定义
 struct AppConfig {
@@ -17,6 +18,8 @@ struct AppConfig {
     std::vector<std::string> includedExtensions;
     bool useFilters = false;
     bool compressEnabled = true;  // 压缩开关，默认为开启
+    bool packageEnabled = false;   // 拼接开关，默认为关闭
+    std::string packageFileName = "backup.pkg"; // 拼接后的文件名
 };
 
 // 用户界面抽象接口
@@ -48,6 +51,9 @@ public:
     // 设置压缩开关
     virtual void setCompressEnabled() = 0;
     
+    // 设置拼接开关
+    virtual void setPackageEnabled() = 0;
+    
     // 管理过滤规则
     virtual void manageFilters() = 0;
     
@@ -56,6 +62,9 @@ public:
     
     // 显示错误
     virtual void showError(const std::string& message) = 0;
+    
+    // 执行重置操作
+    virtual void performReset() = 0;
 };
 
 // 图形界面示例（未来实现）
@@ -65,7 +74,7 @@ class GraphicalUserInterface : public IUserInterface {
 };
 */
 
-// 控制器类 - 处理业务逻辑，与具体界面实现解耦
+// 控制器类 - 处理业务逻辑，与具体界面实现解耦合
 class ApplicationController {
 private:
     IUserInterface* ui;  // 使用原始指针避免循环依赖
@@ -114,7 +123,8 @@ public:
             // filters.push_back(extensionFilter);
         }
         
-        bool success = BackupEngine::backup(config.sourceDir, config.backupDir, &logger, filters, config.compressEnabled);
+        bool success = BackupEngine::backup(config.sourceDir, config.backupDir, &logger, filters, config.compressEnabled, 
+                                           config.packageEnabled, config.packageFileName);
         
         if (success) {
             logger.info("Backup operation completed successfully.");
@@ -147,7 +157,8 @@ public:
             // filters.push_back(extensionFilter);
         }
         
-        bool success = BackupEngine::restore(config.backupDir, config.sourceDir, &logger, filters, config.compressEnabled);
+        bool success = BackupEngine::restore(config.backupDir, config.sourceDir, &logger, filters, config.compressEnabled, 
+                                            config.packageEnabled, config.packageFileName);
         
         if (success) {
             logger.info("Restore operation completed successfully.");
@@ -213,12 +224,16 @@ public:
         std::cout << "Commands:\n";
         std::cout << "  backup, -b      Execute backup operation\n";
         std::cout << "  restore, -r     Execute restore operation\n";
+        std::cout << "  reset, -rs      Reset environment: clear source and backup directories, then copy test_source to source\n";
         std::cout << "  -h, --help      Show this help information\n\n";
         std::cout << "Options:\n";
         std::cout << "  --source <path> Set source directory path\n";
         std::cout << "  --backup <path> Set backup directory path\n";
         std::cout << "  --compress      Enable compression for backup\n";
-        std::cout << "  --no-compress   Disable compression for backup\n\n";
+        std::cout << "  --no-compress   Disable compression for backup\n";
+        std::cout << "  --package       Enable file packaging\n";
+        std::cout << "  --no-package    Disable file packaging\n";
+        std::cout << "  --package-name  Set package file name (default: backup.pkg)\n\n";
         std::cout << "Examples:\n";
         std::cout << "  BackupHelper backup               Execute backup operation with default paths\n";
         std::cout << "  BackupHelper -r                   Execute restore operation\n";
@@ -226,6 +241,9 @@ public:
         std::cout << "  BackupHelper --backup ./backup -r Execute restore operation to specified backup directory\n";
         std::cout << "  BackupHelper --compress -b        Execute backup with compression enabled\n";
         std::cout << "  BackupHelper --no-compress -b     Execute backup with compression disabled\n";
+        std::cout << "  BackupHelper --package -b         Execute backup with file packaging enabled\n";
+        std::cout << "  BackupHelper --compress --package -b Execute backup with both compression and packaging enabled\n";
+        std::cout << "  BackupHelper --package-name mybackup.pkg -b Execute backup with custom package name\n";
         waitForEnter();
     }
 
@@ -236,6 +254,48 @@ public:
 
     void performRestore() override {
         controller.executeRestore();
+        waitForEnter();
+    }
+    
+    void performReset() override {
+        // 要复制的源目录
+        std::string testSourceDir = "S:/code/backuphelper/test_source";
+        
+        // 获取当前配置
+        AppConfig& config = controller.getConfig();
+        
+        // 验证源目录存在
+        std::cout << "Checking if test_source directory exists: " << testSourceDir << "...\n";
+        if (!FileSystem::exists(testSourceDir)) {
+            std::cout << "ERROR: test_source directory does not exist: " << testSourceDir << std::endl;
+            waitForEnter();
+            return;
+        }
+        
+        // 1. 清空backup目录
+        std::cout << "Clearing backup directory: " << config.backupDir << "...\n";
+        if (FileSystem::clearDirectory(config.backupDir)) {
+            std::cout << "Backup directory cleared successfully\n";
+        } else {
+            std::cout << "Failed to clear backup directory\n";
+        }
+        
+        // 2. 清空source目录
+        std::cout << "Clearing source directory: " << config.sourceDir << "...\n";
+        if (FileSystem::clearDirectory(config.sourceDir)) {
+            std::cout << "Source directory cleared successfully\n";
+        } else {
+            std::cout << "Failed to clear source directory\n";
+        }
+        
+        // 3. 将test_source目录内容复制到source目录
+        std::cout << "Copying contents of " << testSourceDir << " to " << config.sourceDir << "...\n";
+        if (FileSystem::copyDirectory(testSourceDir, config.sourceDir)) {
+            std::cout << "Contents copied successfully\n";
+        } else {
+            std::cout << "Failed to copy contents from test_source\n";
+        }
+        
         waitForEnter();
     }
 
@@ -328,6 +388,37 @@ public:
             char choice = std::tolower(input[0]);
             config.compressEnabled = (choice == 'y' || choice == '1');
             std::cout << "Compression status updated to: " << (config.compressEnabled ? "Enabled" : "Disabled") << "\n";
+        } else {
+            std::cout << "Keeping current status unchanged.\n";
+        }
+        waitForEnter();
+    }
+
+    void setPackageEnabled() override {
+        AppConfig& config = controller.getConfig();
+        std::cout << "\n=== File Packaging Settings ===\n";
+        std::cout << "Current status: " << (config.packageEnabled ? "Enabled" : "Disabled") << "\n";
+        
+        std::string input;
+        std::cout << "Enable file packaging? (y/n, default: n): ";
+        std::cin.ignore();
+        std::getline(std::cin, input);
+        
+        if (!input.empty()) {
+            char choice = std::tolower(input[0]);
+            config.packageEnabled = (choice == 'y' || choice == '1');
+            std::cout << "File packaging status updated to: " << (config.packageEnabled ? "Enabled" : "Disabled") << "\n";
+            
+            if (config.packageEnabled) {
+                std::cout << "Package file name (default: backup.pkg): ";
+                std::getline(std::cin, input);
+                if (!input.empty()) {
+                    config.packageFileName = input;
+                    std::cout << "Package file name updated to: " << config.packageFileName << "\n";
+                } else {
+                    std::cout << "Using default package file name: backup.pkg\n";
+                }
+            }
         } else {
             std::cout << "Keeping current status unchanged.\n";
         }
@@ -485,6 +576,9 @@ private:
             } else if (args[i] == "restore" || args[i] == "-r") {
                 performRestore();
                 return false;
+            } else if (args[i] == "reset" || args[i] == "-rs") {
+                performReset();
+                return false;
             } else if (args[i] == "--source" && i + 1 < args.size()) {
                 config.sourceDir = args[++i];
             } else if (args[i] == "--backup" && i + 1 < args.size()) {
@@ -493,6 +587,12 @@ private:
                 config.compressEnabled = true;
             } else if (args[i] == "--no-compress") {
                 config.compressEnabled = false;
+            } else if (args[i] == "--package") {
+                config.packageEnabled = true;
+            } else if (args[i] == "--no-package") {
+                config.packageEnabled = false;
+            } else if (args[i] == "--package-name" && i + 1 < args.size()) {
+                config.packageFileName = args[++i];
             }
         }
         return true;
@@ -508,7 +608,9 @@ private:
         std::cout << "[4] Change Backup Directory (Current: " << config.backupDir << ")\n";
         std::cout << "[5] Manage Filters (" << (config.useFilters ? "Enabled" : "Disabled") << ")\n";
         std::cout << "[6] Toggle Compression (Current: " << (config.compressEnabled ? "Enabled" : "Disabled") << ")\n";
-        std::cout << "[7] Show Help\n";
+        std::cout << "[7] Toggle File Packaging (Current: " << (config.packageEnabled ? "Enabled" : "Disabled") << ")\n";
+        std::cout << "[8] Show Help\n";
+        std::cout << "[9] Reset Environment\n";
         std::cout << "[0] Exit Program\n";
     }
 
@@ -534,7 +636,13 @@ private:
                 setCompressEnabled();
                 break;
             case 7:
+                setPackageEnabled();
+                break;
+            case 8:
                 showHelp();
+                break;
+            case 9:
+                performReset();
                 break;
             case 0:
                 std::cout << "Thank you for using Backup Helper, goodbye!\n";

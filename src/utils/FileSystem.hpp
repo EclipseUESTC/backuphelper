@@ -44,4 +44,13 @@ public:
 
     // 解压单个文件
     static bool decompressFile(const std::string& source, const std::string& destination);
+
+    // 删除单个文件
+    static bool removeFile(const std::string& path);
+    
+    // 清空目录内容
+    static bool clearDirectory(const std::string& path);
+    
+    // 复制目录（递归）
+    static bool copyDirectory(const std::string& sourceDir, const std::string& destDir);
 };

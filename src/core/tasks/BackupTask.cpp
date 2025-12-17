@@ -1,10 +1,12 @@
 #include "BackupTask.hpp"
 #include "../../utils/FileSystem.hpp"
+#include "../../utils/FilePackager.hpp"
 #include <filesystem>
 
 BackupTask::BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
-                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress) 
-    : sourcePath(source), backupPath(backup), status(TaskStatus::PENDING), logger(log), filters(filterList), compressEnabled(compress) {}
+                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName) 
+    : sourcePath(source), backupPath(backup), status(TaskStatus::PENDING), logger(log), filters(filterList), 
+      compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName) {}
 
 bool BackupTask::execute() {
     logger->info("Starting backup: " + sourcePath + " -> " + backupPath);
@@ -54,6 +56,9 @@ bool BackupTask::execute() {
     int failCount = 0;
     uint64_t totalSize = 0;
     
+    // 用于存储所有备份文件路径，以便后续拼接
+    std::vector<std::string> backedUpFiles;
+    
     for (const auto& file : files) {
         std::string relativePath = file.getRelativePath(std::filesystem::path(sourcePath)).string();
         std::string backupFile = (std::filesystem::path(backupPath) / relativePath).string();
@@ -69,21 +74,57 @@ bool BackupTask::execute() {
 
         // 根据压缩开关选择复制方式
         bool success;
+        std::string finalBackupFile;
         if (compressEnabled) {
             // 压缩并复制文件，添加.huff扩展名
-            success = FileSystem::copyAndCompressFile(file.getFilePath().string(), backupFile + ".huff");
+            finalBackupFile = backupFile + ".huff";
+            success = FileSystem::copyAndCompressFile(file.getFilePath().string(), finalBackupFile);
         } else {
             // 普通复制文件
+            finalBackupFile = backupFile;
             success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
         }
         
         if (!success) {
-            logger->error("Copy failed: " + file.getFilePath().string() + " -> " + backupFile);
+            logger->error("Copy failed: " + file.getFilePath().string() + " -> " + finalBackupFile);
             status = TaskStatus::FAILED;
             return false;
         }
+        
+        // 将备份后的文件路径添加到列表中
+        backedUpFiles.push_back(finalBackupFile);
+        
         successCount++;
         totalSize += file.getFileSize();
+    }
+    
+    // 如果启用了文件拼接功能，将所有备份文件拼接成一个包文件
+    if (packageEnabled) {
+        logger->info("Packaging backup files into a single file...");
+        
+        std::string packagePath = (std::filesystem::path(backupPath) / packageFileName).string();
+        
+        // 创建FilePackager实例并执行拼接
+        FilePackager packager;
+        if (!packager.packageFiles(backedUpFiles, packagePath)) {
+            logger->error("Failed to package backup files");
+            status = TaskStatus::FAILED;
+            return false;
+        }
+        
+        logger->info("Backup files packaged successfully: " + packagePath);
+        
+        // 删除原始备份文件，只保留打包文件
+        for (const auto& file : backedUpFiles) {
+            if (!FileSystem::removeFile(file)) {
+                logger->warn("Failed to remove temporary backup file: " + file);
+            }
+        }
+        
+        // 删除空目录
+        removeEmptyDirectories(backupPath);
+        
+        logger->info("Removed temporary backup files, only packaged file remains");
     }
     
     logger->info("Backup completed!");
@@ -94,3 +135,19 @@ bool BackupTask::execute() {
 TaskStatus BackupTask::getStatus() const {
     return status;
 }
+
+    // 删除空目录的辅助方法
+    void BackupTask::removeEmptyDirectories(const std::string& path) {
+        for (auto it = std::filesystem::directory_iterator(path); it != std::filesystem::directory_iterator();) {
+            if (std::filesystem::is_directory(*it) && !std::filesystem::is_symlink(*it)) {
+                std::string subdirPath = it->path().string();
+                ++it;
+                removeEmptyDirectories(subdirPath);
+                if (std::filesystem::is_empty(subdirPath)) {
+                    std::filesystem::remove(subdirPath);
+                }
+            } else {
+                ++it;
+            }
+        }
+    }

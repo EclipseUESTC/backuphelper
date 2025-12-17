@@ -109,3 +109,106 @@ bool FileSystem::decompressAndCopyFile(const std::string& source, const std::str
     // 使用HuffmanCompressor解压文件
     return decompressFile(source, destination);
 }
+
+bool FileSystem::removeFile(const std::string& path) {
+    std::error_code ec;
+    bool result = fs::remove(path, ec);
+    return !ec && result;
+}
+
+// 清空目录内容
+bool FileSystem::clearDirectory(const std::string& path) {
+    std::error_code ec;
+    
+    // 检查目录是否存在
+    if (!fs::exists(path, ec)) {
+        std::cerr << "clearDirectory: Directory does not exist: " << path << ", Error: " << ec.message() << std::endl;
+        return false;
+    }
+    if (!fs::is_directory(path, ec)) {
+        std::cerr << "clearDirectory: Path is not a directory: " << path << ", Error: " << ec.message() << std::endl;
+        return false;
+    }
+    
+    // 遍历目录并删除所有内容
+    for (const auto& entry : fs::directory_iterator(path, ec)) {
+        if (ec) {
+            std::cerr << "clearDirectory: Failed to iterate directory: " << path << ", Error: " << ec.message() << std::endl;
+            return false;
+        }
+        
+        const auto& entryPath = entry.path();
+        if (entry.is_directory(ec)) {
+            if (!fs::remove_all(entryPath, ec)) {
+                // 检查是否真的有错误
+                if (ec) {
+                    std::cerr << "clearDirectory: Failed to remove directory: " << entryPath.string() << ", Error: " << ec.message() << std::endl;
+                    return false;
+                }
+                // 如果没有错误码，说明目录已经不存在，继续处理
+            }
+        } else {
+            if (!fs::remove(entryPath, ec)) {
+                // 检查是否真的有错误
+                if (ec) {
+                    std::cerr << "clearDirectory: Failed to remove file: " << entryPath.string() << ", Error: " << ec.message() << std::endl;
+                    return false;
+                }
+                // 如果没有错误码，说明文件已经不存在，继续处理
+            }
+        }
+    }
+    
+    return !ec;
+}
+
+// 复制目录（递归）
+bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& destDir) {
+    std::error_code ec;
+    
+    // 检查源目录是否存在
+    if (!fs::exists(sourceDir, ec)) {
+        std::cerr << "copyDirectory: Source directory does not exist: " << sourceDir << ", Error: " << ec.message() << std::endl;
+        return false;
+    }
+    if (!fs::is_directory(sourceDir, ec)) {
+        std::cerr << "copyDirectory: Source path is not a directory: " << sourceDir << ", Error: " << ec.message() << std::endl;
+        return false;
+    }
+    
+    // 创建目标目录
+    if (!fs::create_directories(destDir, ec)) {
+        // 检查是否因为目录已存在而失败（这是正常情况，不是错误）
+        if (ec) {
+            std::cerr << "copyDirectory: Failed to create destination directory: " << destDir << ", Error: " << ec.message() << std::endl;
+            return false;
+        }
+        // 目录已存在，这是正常情况，继续执行
+        std::cout << "copyDirectory: Destination directory already exists: " << destDir << std::endl;
+    }
+    
+    // 遍历源目录并复制所有内容
+    for (const auto& entry : fs::directory_iterator(sourceDir, ec)) {
+        if (ec) {
+            std::cerr << "copyDirectory: Failed to iterate source directory: " << sourceDir << ", Error: " << ec.message() << std::endl;
+            return false;
+        }
+        
+        const auto& sourcePath = entry.path();
+        const auto destPath = fs::path(destDir) / sourcePath.filename();
+        
+        if (entry.is_directory(ec)) {
+            if (!copyDirectory(sourcePath.string(), destPath.string())) {
+                std::cerr << "copyDirectory: Failed to copy subdirectory: " << sourcePath.string() << " to " << destPath.string() << std::endl;
+                return false;
+            }
+        } else {
+            if (!fs::copy_file(sourcePath, destPath, fs::copy_options::overwrite_existing, ec)) {
+                std::cerr << "copyDirectory: Failed to copy file: " << sourcePath.string() << " to " << destPath.string() << ", Error: " << ec.message() << std::endl;
+                return false;
+            }
+        }
+    }
+    
+    return !ec;
+}

@@ -86,6 +86,7 @@ add_executable(BackupHelper
     src/utils/ConsoleLogger.cpp
     src/utils/FileSystem.cpp
     src/utils/HuffmanCompressor.cpp
+    src/utils/FilePackager.cpp
 )
 
-target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
