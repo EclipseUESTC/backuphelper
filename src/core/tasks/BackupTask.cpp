@@ -1,12 +1,13 @@
 #include "BackupTask.hpp"
 #include "../../utils/FileSystem.hpp"
 #include "../../utils/FilePackager.hpp"
+#include "../../utils/Encryption.hpp"
 #include <filesystem>
 
 BackupTask::BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
-                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName) 
+                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName, const std::string& pass) 
     : sourcePath(source), backupPath(backup), status(TaskStatus::PENDING), logger(log), filters(filterList), 
-      compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName) {}
+      compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName), password(pass) {}
 
 bool BackupTask::execute() {
     logger->info("Starting backup: " + sourcePath + " -> " + backupPath);
@@ -53,7 +54,6 @@ bool BackupTask::execute() {
     }
     
     int successCount = 0;
-    int failCount = 0;
     uint64_t totalSize = 0;
     
     // 用于存储所有备份文件路径，以便后续拼接
@@ -91,7 +91,7 @@ bool BackupTask::execute() {
             return false;
         }
         
-        // 将备份后的文件路径添加到列表中
+        // 将备份后的文件路径添加到列表中（暂不加密，等打包后一起加密）
         backedUpFiles.push_back(finalBackupFile);
         
         successCount++;
@@ -99,20 +99,21 @@ bool BackupTask::execute() {
     }
     
     // 如果启用了文件拼接功能，将所有备份文件拼接成一个包文件
+    std::string finalPackagePath;
     if (packageEnabled) {
         logger->info("Packaging backup files into a single file...");
         
-        std::string packagePath = (std::filesystem::path(backupPath) / packageFileName).string();
+        finalPackagePath = (std::filesystem::path(backupPath) / packageFileName).string();
         
         // 创建FilePackager实例并执行拼接
         FilePackager packager;
-        if (!packager.packageFiles(backedUpFiles, packagePath)) {
+        if (!packager.packageFiles(backedUpFiles, finalPackagePath)) {
             logger->error("Failed to package backup files");
             status = TaskStatus::FAILED;
             return false;
         }
         
-        logger->info("Backup files packaged successfully: " + packagePath);
+        logger->info("Backup files packaged successfully: " + finalPackagePath);
         
         // 删除原始备份文件，只保留打包文件
         for (const auto& file : backedUpFiles) {
@@ -125,6 +126,42 @@ bool BackupTask::execute() {
         removeEmptyDirectories(backupPath);
         
         logger->info("Removed temporary backup files, only packaged file remains");
+        
+        // 如果提供了密码，则加密打包文件
+        if (!password.empty()) {
+            std::string encryptedFile = finalPackagePath + ".enc";
+            if (!Encryption::encryptFile(finalPackagePath, encryptedFile, password)) {
+                logger->error("Encryption failed: " + finalPackagePath);
+                status = TaskStatus::FAILED;
+                return false;
+            }
+            
+            // 删除未加密的打包文件
+            if (!FileSystem::removeFile(finalPackagePath)) {
+                logger->warn("Failed to remove unencrypted package file: " + finalPackagePath);
+            }
+            
+            finalPackagePath = encryptedFile;
+        }
+    } else {
+        // 如果不打包，则对每个文件进行加密
+        if (!password.empty()) {
+            for (auto& backupFile : backedUpFiles) {
+                std::string encryptedFile = backupFile + ".enc";
+                if (!Encryption::encryptFile(backupFile, encryptedFile, password)) {
+                    logger->error("Encryption failed: " + backupFile);
+                    status = TaskStatus::FAILED;
+                    return false;
+                }
+                
+                // 删除未加密的备份文件
+                if (!FileSystem::removeFile(backupFile)) {
+                    logger->warn("Failed to remove unencrypted backup file: " + backupFile);
+                }
+                
+                backupFile = encryptedFile;
+            }
+        }
     }
     
     logger->info("Backup completed!");

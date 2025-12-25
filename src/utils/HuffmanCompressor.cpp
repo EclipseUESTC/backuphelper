@@ -53,6 +53,39 @@ HuffmanNode* HuffmanCompressor::buildHuffmanTree(const std::unordered_map<char, 
     return minHeap.top();
 }
 
+HuffmanNode* HuffmanCompressor::buildHuffmanTree(const std::unordered_map<unsigned char, unsigned int>& freqMap) {
+    // 创建优先队列（最小堆）
+    std::priority_queue<HuffmanNode*, std::vector<HuffmanNode*>, Compare> minHeap;
+
+    // 将所有字符及其频率加入优先队列
+    for (const auto& pair : freqMap) {
+        minHeap.push(new HuffmanNode(static_cast<char>(pair.first), pair.second));
+    }
+
+    // 构建Huffman树
+    while (minHeap.size() > 1) {
+        // 取出频率最小的两个节点
+        HuffmanNode* left = minHeap.top();
+        minHeap.pop();
+
+        HuffmanNode* right = minHeap.top();
+        minHeap.pop();
+
+        // 创建一个新节点，频率为两个节点的频率之和
+        // 使用特殊字符'$'作为内部节点的标记
+        HuffmanNode* newNode = new HuffmanNode('$', left->freq + right->freq);
+        newNode->left = left;
+        newNode->right = right;
+
+        // 将新节点加入优先队列
+        minHeap.push(newNode);
+    }
+
+    // 剩下的节点就是根节点
+    return minHeap.top();
+}
+
+// generateCodes的char版本实现
 void HuffmanCompressor::generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<char, std::string>& huffmanCodes) {
     if (root == nullptr) {
         return;
@@ -63,6 +96,23 @@ void HuffmanCompressor::generateCodes(HuffmanNode* root, const std::string& code
         huffmanCodes[root->data] = code;
         return;
     }
+
+    // 递归遍历左右子树
+    generateCodes(root->left, code + "0", huffmanCodes);
+    generateCodes(root->right, code + "1", huffmanCodes);
+}
+
+// generateCodes的unsigned char版本实现
+void HuffmanCompressor::generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<unsigned char, std::string>& huffmanCodes) {
+    if (root == nullptr) {
+        return;
+    }
+
+    // 如果是叶子节点，保存其编码
+        if (root->left == nullptr && root->right == nullptr) {
+            huffmanCodes[static_cast<unsigned char>(root->data)] = code;
+            return;
+        }
 
     // 递归遍历左右子树
     generateCodes(root->left, code + "0", huffmanCodes);
@@ -134,43 +184,6 @@ std::string HuffmanCompressor::bytesToBitString(const std::vector<unsigned char>
     return bitString;
 }
 
-void HuffmanCompressor::writeTreeToFile(HuffmanNode* root, std::ofstream& outFile) {
-    if (root == nullptr) {
-        return;
-    }
-    
-    // 如果是叶子节点，写入'1'和字符
-    if (root->left == nullptr && root->right == nullptr) {
-        outFile.put('1');
-        outFile.put(root->data);
-    } else {
-        // 如果是内部节点，写入'0'并递归写入左右子树
-        outFile.put('0');
-        writeTreeToFile(root->left, outFile);
-        writeTreeToFile(root->right, outFile);
-    }
-}
-
-HuffmanNode* HuffmanCompressor::readTreeFromFile(std::ifstream& inFile) {
-    char bit;
-    inFile.get(bit);
-    
-    if (bit == '1') {
-        // 叶子节点，读取字符
-        char data;
-        inFile.get(data);
-        return new HuffmanNode(data, 0);
-    } else {
-        // 内部节点，递归读取左右子树
-        HuffmanNode* left = readTreeFromFile(inFile);
-        HuffmanNode* right = readTreeFromFile(inFile);
-        HuffmanNode* node = new HuffmanNode('$', 0);
-        node->left = left;
-        node->right = right;
-        return node;
-    }
-}
-
 void HuffmanCompressor::writeIntToFile(std::ofstream& outFile, unsigned int value) {
     outFile.write(reinterpret_cast<const char*>(&value), sizeof(value));
 }
@@ -190,9 +203,26 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             return false;
         }
         
-        std::ostringstream ss;
-        ss << inFile.rdbuf();
-        std::string inputData = ss.str();
+        // 获取文件大小
+        inFile.seekg(0, std::ios::end);
+        std::streampos fileSize = inFile.tellg();
+        inFile.seekg(0, std::ios::beg);
+        
+        // 对于小文件，直接复制，不进行压缩（减少元数据开销）
+        if (fileSize < 100) {
+            inFile.close();
+            std::ifstream src(inputFilePath, std::ios::binary);
+            std::ofstream dst(outputFilePath, std::ios::binary);
+            if (!src || !dst) {
+                std::cerr << "Error: Could not copy small file" << std::endl;
+                return false;
+            }
+            dst << src.rdbuf();
+            return true;
+        }
+        
+        std::vector<unsigned char> inputData(fileSize);
+        inFile.read(reinterpret_cast<char*>(inputData.data()), fileSize);
         inFile.close();
         
         if (inputData.empty()) {
@@ -201,23 +231,59 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         }
         
         // 2. 统计字符频率
-        std::unordered_map<char, unsigned int> freqMap = calculateFrequency(inputData);
+        std::unordered_map<unsigned char, unsigned int> freqMap;
+        for (unsigned char ch : inputData) {
+            freqMap[ch]++;
+        }
+        
+        // 如果字符种类过多，可能不适合Huffman压缩
+        if (freqMap.size() > 200) {
+            // 直接复制文件，不进行压缩
+            std::ofstream outFile(outputFilePath, std::ios::binary);
+            if (!outFile) {
+                std::cerr << "Error: Could not open output file for direct copy." << std::endl;
+                return false;
+            }
+            outFile.write(reinterpret_cast<const char*>(inputData.data()), inputData.size());
+            outFile.close();
+            return true;
+        }
         
         // 3. 构建Huffman树
         root = buildHuffmanTree(freqMap);
         
         // 4. 生成Huffman编码
-        std::unordered_map<char, std::string> huffmanCodes;
+        std::unordered_map<unsigned char, std::string> huffmanCodes;
         generateCodes(root, "", huffmanCodes);
         
         // 5. 使用Huffman编码压缩数据
         std::string encodedData;
-        for (char ch : inputData) {
+        for (unsigned char ch : inputData) {
             encodedData += huffmanCodes[ch];
         }
         
         // 6. 将编码后的数据转换为字节序列
         std::vector<unsigned char> bytes = bitStringToBytes(encodedData);
+        
+        // 计算压缩后总大小（包括元数据）
+        size_t metadataSize = 1 + (freqMap.size() * 5) + sizeof(unsigned int); // 填充位(1) + 频率表(每个字符5字节) + 原始大小(4字节)
+        size_t totalCompressedSize = metadataSize + bytes.size();
+        
+        // 如果压缩后的文件没有变小，直接复制原始文件
+        if (totalCompressedSize >= inputData.size()) {
+            std::ofstream outFile(outputFilePath, std::ios::binary);
+            if (!outFile) {
+                std::cerr << "Error: Could not open output file for direct copy." << std::endl;
+                delete root;
+                root = nullptr;
+                return false;
+            }
+            outFile.write(reinterpret_cast<const char*>(inputData.data()), inputData.size());
+            outFile.close();
+            delete root;
+            root = nullptr;
+            return true;
+        }
         
         // 7. 写入压缩文件
         std::ofstream outFile(outputFilePath, std::ios::binary);
@@ -232,10 +298,20 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         int padding = (8 - (encodedData.size() % 8)) % 8;
         outFile.put(static_cast<char>(padding));
         
-        // 写入Huffman树
-        writeTreeToFile(root, outFile);
+        // 优化：使用更紧凑的方式存储频率表，而不是完整的Huffman树
+        // 写入字符种类数
+        unsigned char charCount = static_cast<unsigned char>(freqMap.size());
+        outFile.put(charCount);
         
-        // 写入原始数据大小（用于验证解压结果）
+        // 写入每个字符及其频率
+        for (const auto& pair : freqMap) {
+            outFile.put(pair.first);
+            // 使用32位无符号整数存储频率
+            unsigned int freq = pair.second;
+            outFile.write(reinterpret_cast<const char*>(&freq), sizeof(freq));
+        }
+        
+        // 写入原始数据大小
         writeIntToFile(outFile, static_cast<unsigned int>(inputData.size()));
         
         // 写入压缩后的数据
@@ -246,11 +322,6 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         // 清理资源
         delete root;
         root = nullptr;
-        
-        std::cout << "Compression successful!" << std::endl;
-        std::cout << "Original size: " << inputData.size() << " bytes" << std::endl;
-        std::cout << "Compressed size: " << bytes.size() + 1 + static_cast<unsigned int>(2 * freqMap.size() - 1) + sizeof(unsigned int) << " bytes" << std::endl;
-        std::cout << "Compression ratio: " << (double)bytes.size() / inputData.size() * 100 << "%" << std::endl;
         
         return true;
         
@@ -276,21 +347,57 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
         inFile.get(paddingChar);
         int padding = static_cast<unsigned char>(paddingChar);
         
-        // 3. 读取Huffman树
-        root = readTreeFromFile(inFile);
+        // 3. 读取字符种类数
+        char charCountChar;
+        inFile.get(charCountChar);
+        unsigned char charCount = static_cast<unsigned char>(charCountChar);
         
-        // 4. 读取原始数据大小
+        // 4. 读取频率表
+        std::unordered_map<unsigned char, unsigned int> freqMap;
+        for (unsigned char i = 0; i < charCount; i++) {
+            char ch;
+            inFile.get(ch);
+            unsigned int freq;
+            inFile.read(reinterpret_cast<char*>(&freq), sizeof(freq));
+            freqMap[static_cast<unsigned char>(ch)] = freq;
+        }
+        
+        // 5. 重建Huffman树
+        root = buildHuffmanTree(freqMap);
+        
+        // 6. 读取原始数据大小
         unsigned int originalSize = readIntFromFile(inFile);
         
-        // 5. 读取压缩后的数据
+        // 7. 读取压缩后的数据
         std::vector<unsigned char> compressedData(std::istreambuf_iterator<char>(inFile), {});
         inFile.close();
         
-        // 6. 将压缩数据转换为位串
+        // 8. 将压缩数据转换为位串
         std::string encodedData = bytesToBitString(compressedData, padding);
         
-        // 7. 解码数据
-        std::string decodedData = decodeText(root, encodedData);
+        // 9. 解码数据
+        std::vector<unsigned char> decodedData;
+        decodedData.reserve(originalSize);
+        
+        HuffmanNode* current = root;
+        for (char bit : encodedData) {
+            if (bit == '0') {
+                current = current->left;
+            } else {
+                current = current->right;
+            }
+            
+            // 如果到达叶子节点
+            if (current->left == nullptr && current->right == nullptr) {
+                decodedData.push_back(static_cast<unsigned char>(current->data));
+                current = root; // 回到根节点继续解码
+                
+                // 提前结束解码，避免处理多余的填充位
+                if (decodedData.size() == originalSize) {
+                    break;
+                }
+            }
+        }
         
         // 验证解码结果大小
         if (decodedData.size() != originalSize) {
@@ -300,7 +407,7 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
             return false;
         }
         
-        // 8. 写入解压文件
+        // 10. 写入解压文件
         std::ofstream outFile(outputFilePath, std::ios::binary);
         if (!outFile.is_open()) {
             std::cerr << "Error: Could not open output file: " << outputFilePath << std::endl;
@@ -309,15 +416,12 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
             return false;
         }
         
-        outFile.write(decodedData.c_str(), decodedData.size());
+        outFile.write(reinterpret_cast<const char*>(decodedData.data()), decodedData.size());
         outFile.close();
         
         // 清理资源
         delete root;
         root = nullptr;
-        
-        std::cout << "Decompression successful!" << std::endl;
-        std::cout << "Decompressed size: " << decodedData.size() << " bytes" << std::endl;
         
         return true;
         

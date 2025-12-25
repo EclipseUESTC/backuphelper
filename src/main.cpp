@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+
+// 在包含windows.h之前定义NOMINMAX宏，以避免max宏与std::max冲突
+#define NOMINMAX
+#include <windows.h> // 添加Windows API头文件
 #include "core/BackupEngine.hpp"
 #include "core/Filter.hpp"
 #include "utils/ConsoleLogger.hpp"
@@ -20,6 +24,7 @@ struct AppConfig {
     bool compressEnabled = true;  // 压缩开关，默认为开启
     bool packageEnabled = false;   // 拼接开关，默认为关闭
     std::string packageFileName = "backup.pkg"; // 拼接后的文件名
+    std::string password; // 加密/解密密码
 };
 
 // 用户界面抽象接口
@@ -65,6 +70,12 @@ public:
     
     // 执行重置操作
     virtual void performReset() = 0;
+    
+    // 设置加密密码
+    virtual void setEncryptionPassword() = 0;
+    
+    // 删除source文件夹内的所有文件（测试用）
+    virtual void deleteSourceFiles() = 0;
 };
 
 // 图形界面示例（未来实现）
@@ -124,7 +135,7 @@ public:
         }
         
         bool success = BackupEngine::backup(config.sourceDir, config.backupDir, &logger, filters, config.compressEnabled, 
-                                           config.packageEnabled, config.packageFileName);
+                                           config.packageEnabled, config.packageFileName, config.password);
         
         if (success) {
             logger.info("Backup operation completed successfully.");
@@ -158,7 +169,7 @@ public:
         }
         
         bool success = BackupEngine::restore(config.backupDir, config.sourceDir, &logger, filters, config.compressEnabled, 
-                                            config.packageEnabled, config.packageFileName);
+                                            config.packageEnabled, config.packageFileName, config.password);
         
         if (success) {
             logger.info("Restore operation completed successfully.");
@@ -233,7 +244,8 @@ public:
         std::cout << "  --no-compress   Disable compression for backup\n";
         std::cout << "  --package       Enable file packaging\n";
         std::cout << "  --no-package    Disable file packaging\n";
-        std::cout << "  --package-name  Set package file name (default: backup.pkg)\n\n";
+        std::cout << "  --package-name  Set package file name (default: backup.pkg)\n";
+        std::cout << "  --password <pwd> Set password for encryption/decryption\n\n";
         std::cout << "Examples:\n";
         std::cout << "  BackupHelper backup               Execute backup operation with default paths\n";
         std::cout << "  BackupHelper -r                   Execute restore operation\n";
@@ -244,6 +256,8 @@ public:
         std::cout << "  BackupHelper --package -b         Execute backup with file packaging enabled\n";
         std::cout << "  BackupHelper --compress --package -b Execute backup with both compression and packaging enabled\n";
         std::cout << "  BackupHelper --package-name mybackup.pkg -b Execute backup with custom package name\n";
+        std::cout << "  BackupHelper --password mysecret -b Execute backup with encryption enabled\n";
+        std::cout << "  BackupHelper --password mysecret -r Execute restore with decryption\n";
         waitForEnter();
     }
 
@@ -253,6 +267,47 @@ public:
     }
 
     void performRestore() override {
+        // 检查是否有加密的备份文件
+        bool hasEncryptedFiles = false;
+        AppConfig& config = controller.getConfig();
+        
+        // 扫描备份目录，检查是否有.enc文件
+        auto files = FileSystem::getAllFiles(config.backupDir);
+        for (const auto& file : files) {
+            std::string filePath = file.getFilePath().string();
+            if (filePath.size() > 4 && filePath.substr(filePath.size() - 4) == ".enc") {
+                hasEncryptedFiles = true;
+                std::cout << "Detected encrypted document. Current Password:" << std::endl;
+                break;
+            }
+        }
+        
+        // 如果有加密文件且配置中没有密码，则提示用户输入
+        while (hasEncryptedFiles && !config.password.empty()) {
+            std::cout << "\nEncrypted backup files found. Enter password: ";
+            
+            // 隐藏密码输入
+            HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
+            DWORD mode;
+            GetConsoleMode(hConsole, &mode);
+            SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
+            
+            std::string tempPassword;
+            // 清除输入缓冲区中的换行符
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::getline(std::cin, tempPassword);
+            
+            // 恢复控制台模式
+            SetConsoleMode(hConsole, mode);
+            std::cout << "\n";
+            
+            // 临时设置密码
+            if (tempPassword == config.password) {
+                std::cout << "password match, restore continues in a second." << std::endl;
+                break;
+            };
+        }
+        
         controller.executeRestore();
         waitForEnter();
     }
@@ -593,6 +648,8 @@ private:
                 config.packageEnabled = false;
             } else if (args[i] == "--package-name" && i + 1 < args.size()) {
                 config.packageFileName = args[++i];
+            } else if (args[i] == "--password" && i + 1 < args.size()) {
+                config.password = args[++i];
             }
         }
         return true;
@@ -609,8 +666,10 @@ private:
         std::cout << "[5] Manage Filters (" << (config.useFilters ? "Enabled" : "Disabled") << ")\n";
         std::cout << "[6] Toggle Compression (Current: " << (config.compressEnabled ? "Enabled" : "Disabled") << ")\n";
         std::cout << "[7] Toggle File Packaging (Current: " << (config.packageEnabled ? "Enabled" : "Disabled") << ")\n";
-        std::cout << "[8] Show Help\n";
-        std::cout << "[9] Reset Environment\n";
+        std::cout << "[8] Set Encryption Password (Current: " << (config.password.empty() ? "Not Set" : "Set") << ")\n";
+        std::cout << "[9] Show Help\n";
+        std::cout << "[10] Reset Environment\n";
+        std::cout << "[11] Delete Source Files (Test)\n";
         std::cout << "[0] Exit Program\n";
     }
 
@@ -639,10 +698,16 @@ private:
                 setPackageEnabled();
                 break;
             case 8:
-                showHelp();
+                setEncryptionPassword();
                 break;
             case 9:
+                showHelp();
+                break;
+            case 10:
                 performReset();
+                break;
+            case 11:
+                deleteSourceFiles();
                 break;
             case 0:
                 std::cout << "Thank you for using Backup Helper, goodbye!\n";
@@ -658,6 +723,65 @@ private:
         std::cout << "\nPress Enter to continue...";
         std::cin.ignore();
         std::cin.get();
+    }
+
+    // Set encryption password
+    void setEncryptionPassword() override {
+        AppConfig& config = controller.getConfig(); // 添加config变量的获取
+        std::cout << "=== Set Encryption Password ===\n";
+        std::cout << "Current password: " << (config.password.empty() ? "Not Set" : "Set") << "\n";
+        
+        std::cout << "Enter new password (press Enter to remove password): ";
+        std::string newPassword;
+        
+        // 清除输入缓冲区中的换行符
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        
+        // Read password with no echo (Note: This works on Windows)
+        HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
+        DWORD mode;
+        GetConsoleMode(hConsole, &mode);  // 修复：传递指向mode的指针
+        SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
+        
+        std::getline(std::cin, newPassword);
+        
+        // Restore console mode
+        SetConsoleMode(hConsole, mode);
+        std::cout << "\n";
+        
+        config.password = newPassword;
+        
+        if (config.password.empty()) {
+            std::cout << "Password removed successfully.\n";
+        } else {
+            std::cout << "Password set successfully.\n";
+        }
+        
+        waitForEnter();
+    }
+    
+    void deleteSourceFiles() override {
+        AppConfig& config = controller.getConfig();
+        std::cout << "=== Delete Source Files (Test) ===\n";
+        std::cout << "This will delete ALL files in the source directory: " << config.sourceDir << "\n";
+        std::cout << "WARNING: This operation cannot be undone!\n";
+        
+        std::string confirm;
+        std::cout << "Type 'DELETE' to confirm deletion: ";
+        std::cin >> confirm;
+        
+        if (confirm == "DELETE") {
+            // 使用FileSystem类的clearDirectory方法删除source目录中的所有文件
+            if (FileSystem::clearDirectory(config.sourceDir)) {
+                std::cout << "All files in source directory have been deleted successfully.\n";
+            } else {
+                std::cout << "Failed to delete files in source directory.\n";
+            }
+        } else {
+            std::cout << "Deletion cancelled.\n";
+        }
+        
+        waitForEnter();
     }
 };
 

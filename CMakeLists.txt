@@ -87,6 +87,17 @@ add_executable(BackupHelper
     src/utils/FileSystem.cpp
     src/utils/HuffmanCompressor.cpp
     src/utils/FilePackager.cpp
+    src/utils/Encryption.cpp
 )
 
-target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# 查找并链接OpenSSL库
+find_package(OpenSSL REQUIRED)
+if(OPENSSL_FOUND)
+    message(STATUS "OpenSSL found: ${OPENSSL_VERSION}")
+    target_include_directories(BackupHelper PRIVATE ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries(BackupHelper PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+else()
+    message(FATAL_ERROR "OpenSSL not found. Please install OpenSSL.")
+endif()

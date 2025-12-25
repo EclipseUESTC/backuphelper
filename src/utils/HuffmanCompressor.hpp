@@ -39,16 +39,22 @@ public:
     bool decompressFile(const std::string& inputFilePath, const std::string& outputFilePath);
 
 private:
-    // 统计字符频率
+    // 统计字符频率（char版本，兼容旧代码）
     std::unordered_map<char, unsigned int> calculateFrequency(const std::string& data);
 
-    // 构建Huffman树
+    // 构建Huffman树（char版本，兼容旧代码）
     HuffmanNode* buildHuffmanTree(const std::unordered_map<char, unsigned int>& freqMap);
+    
+    // 构建Huffman树（unsigned char版本，用于二进制文件处理）
+    HuffmanNode* buildHuffmanTree(const std::unordered_map<unsigned char, unsigned int>& freqMap);
 
-    // 生成Huffman编码
+    // 生成Huffman编码（char版本，兼容旧代码）
     void generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<char, std::string>& huffmanCodes);
+    
+    // 生成Huffman编码（unsigned char版本，用于二进制文件处理）
+    void generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<unsigned char, std::string>& huffmanCodes);
 
-    // 解码函数
+    // 解码函数（char版本，兼容旧代码）
     std::string decodeText(HuffmanNode* root, const std::string& encodedData);
 
     // 将位串转换为字节序列
@@ -56,12 +62,6 @@ private:
 
     // 将字节序列转换为位串
     std::string bytesToBitString(const std::vector<unsigned char>& bytes, int padding);
-
-    // 写入Huffman树到文件
-    void writeTreeToFile(HuffmanNode* root, std::ofstream& outFile);
-
-    // 从文件中读取Huffman树
-    HuffmanNode* readTreeFromFile(std::ifstream& inFile);
 
     // 辅助函数：将整数转换为字节数组
     void writeIntToFile(std::ofstream& outFile, unsigned int value);

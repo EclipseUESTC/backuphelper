@@ -8,8 +8,9 @@ bool BackupEngine::backup(const std::string& sourceDir,
                           const std::vector<std::shared_ptr<Filter>>& filters,
                           bool compressEnabled,
                           bool packageEnabled,
-                          const std::string& packageFileName) {
-    BackupTask task(sourceDir, backupPath, logger, filters, compressEnabled, packageEnabled, packageFileName);
+                          const std::string& packageFileName,
+                          const std::string& password) {
+    BackupTask task(sourceDir, backupPath, logger, filters, compressEnabled, packageEnabled, packageFileName, password);
     return task.execute();
 }
 
@@ -18,7 +19,8 @@ bool BackupEngine::restore(const std::string& backupPath,
                             const std::vector<std::shared_ptr<Filter>>& filters,
                             bool compressEnabled,
                             bool packageEnabled,
-                            const std::string& packageFileName) {
-    RestoreTask task(backupPath, restoreDir, logger, filters, compressEnabled, packageEnabled, packageFileName);
+                            const std::string& packageFileName,
+                            const std::string& password) {
+    RestoreTask task(backupPath, restoreDir, logger, filters, compressEnabled, packageEnabled, packageFileName, password);
     return task.execute();
 }

@@ -92,7 +92,23 @@ std::string FileSystem::getRelativePath(const std::string& path, const std::stri
 
 bool FileSystem::compressFile(const std::string& source, const std::string& destination) {
     HuffmanCompressor compressor;
-    return compressor.compressFile(source, destination);
+    
+    // 先尝试压缩
+    if (!compressor.compressFile(source, destination)) {
+        return false;
+    }
+    
+    // 检查压缩效率
+    uint64_t originalSize = getFileSize(source);
+    uint64_t compressedSize = getFileSize(destination);
+    
+    // 如果压缩后的文件没有变小，删除压缩文件，直接复制原始文件
+    if (compressedSize >= originalSize) {
+        std::filesystem::remove(destination);
+        return copyFile(source, destination);
+    }
+    
+    return true;
 }
 
 bool FileSystem::decompressFile(const std::string& source, const std::string& destination) {
@@ -106,8 +122,16 @@ bool FileSystem::copyAndCompressFile(const std::string& source, const std::strin
 }
 
 bool FileSystem::decompressAndCopyFile(const std::string& source, const std::string& destination) {
-    // 使用HuffmanCompressor解压文件
-    return decompressFile(source, destination);
+    HuffmanCompressor compressor;
+    
+    // 先尝试解压
+    if (compressor.decompressFile(source, destination)) {
+        return true;
+    }
+    
+    // 如果解压失败，可能是因为文件没有被压缩，直接复制
+    std::cerr << "Warning: Failed to decompress file " << source << ", copying as regular file" << std::endl;
+    return copyFile(source, destination);
 }
 
 bool FileSystem::removeFile(const std::string& path) {

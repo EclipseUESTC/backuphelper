@@ -28,11 +28,14 @@ private:
     bool packageEnabled;
     // 包文件名
     std::string packageFileName;
+    // 加密密码
+    std::string password;
 
 public:
     BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
               const std::vector<std::shared_ptr<Filter>>& filterList = {}, bool compress = true, 
-              bool package = false, const std::string& pkgFileName = "backup.pkg");
+              bool package = false, const std::string& pkgFileName = "backup.pkg",
+              const std::string& pass = "");
     bool execute();
     TaskStatus getStatus() const;
 
