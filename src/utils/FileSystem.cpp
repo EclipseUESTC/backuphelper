@@ -4,6 +4,19 @@
 #include <iostream>  // 仅用于调试（可选），正式版可移除
 #include <stdexcept>
 
+// 跨平台头文件包含
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+    #include <errno.h>
+    // 定义Windows常量以便跨平台使用
+    #define ERROR_ALREADY_EXISTS 183
+#endif
+
 namespace fs = std::filesystem;
 
 bool FileSystem::exists(const std::string& path) {
@@ -39,11 +52,79 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     }
 
     std::error_code ec;
-    fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec);
+    fs::path sourcePath(source);
+    fs::file_status status = fs::status(sourcePath, ec);
     if (ec) {
-        std::cerr << "Error: Failed to copy file from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
+        std::cerr << "Error: Failed to get file status for " << source << " (" << ec.message() << ")" << std::endl;
         return false;
     }
+
+    // 根据文件类型执行不同的复制操作
+    if (fs::is_regular_file(status)) {
+        // 普通文件，使用原有的复制逻辑
+        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
+            std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
+            return false;
+        }
+    } else if (fs::is_directory(status)) {
+        // 目录文件，创建目录
+        if (!fs::create_directories(destination, ec)) {
+            // 目录已存在是正常情况，不是错误
+            if (ec && ec.value() != ERROR_ALREADY_EXISTS) {
+                std::cerr << "Error: Failed to create directory " << destination << " (" << ec.message() << ")" << std::endl;
+                return false;
+            }
+        }
+    } else if (fs::is_symlink(status)) {
+        // 符号链接文件，复制符号链接本身
+        fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
+        if (ec) {
+            std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
+            return false;
+        }
+        
+        // 先删除已存在的符号链接或文件
+        if (fs::exists(destPath, ec)) {
+            fs::remove(destPath, ec);
+            if (ec) {
+                std::cerr << "Error: Failed to remove existing file " << destination << " (" << ec.message() << ")" << std::endl;
+                return false;
+            }
+        }
+        
+        fs::create_symlink(symlinkTarget, destPath, ec);
+        if (ec) {
+            std::cerr << "Error: Failed to create symlink " << destination << " (" << ec.message() << ")" << std::endl;
+            return false;
+        }
+    }
+    #ifdef __linux__
+    else if (fs::is_character_file(status) || fs::is_block_file(status) || fs::is_fifo(status) || fs::is_socket(status)) {
+        // Linux特殊文件：字符设备、块设备、管道、套接字
+        // 使用mknod命令或特殊系统调用创建
+        // 这里简化处理，只在Linux上尝试复制设备文件
+        struct stat st;
+        if (stat(source.c_str(), &st) == 0) {
+            // 创建相同类型和权限的文件
+            if (mknod(destination.c_str(), st.st_mode, st.st_rdev) != 0) {
+                std::cerr << "Error: Failed to create special file " << destination << " (" << strerror(errno) << ")" << std::endl;
+                return false;
+            }
+        } else {
+            std::cerr << "Error: Failed to get stat for special file " << source << " (" << strerror(errno) << ")" << std::endl;
+            return false;
+        }
+    }
+    #endif
+    else {
+        // 其他类型的文件，使用原有的复制逻辑尝试复制
+        std::cerr << "Warning: Unknown file type for " << source << ", attempting regular copy" << std::endl;
+        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
+            std::cerr << "Error: Failed to copy unknown file type from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
+            return false;
+        }
+    }
+    
     return true;
 }
 
@@ -58,9 +139,8 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
     try {
         for (const auto& entry : fs::recursive_directory_iterator(directory, ec)) {
             if (ec) break;
-            if (entry.is_regular_file()) {
-                files.emplace_back(entry.path());
-            }
+            // 收集所有类型的文件，包括目录、符号链接、设备文件等
+            files.emplace_back(entry.path());
         }
     } catch (const fs::filesystem_error&) {
         // 忽略异常，返回已收集的文件（或空）

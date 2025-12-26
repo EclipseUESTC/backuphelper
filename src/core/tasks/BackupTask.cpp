@@ -72,15 +72,15 @@ bool BackupTask::execute() {
             return false;
         }
 
-        // 根据压缩开关选择复制方式
+        // 根据压缩开关和文件类型选择复制方式
         bool success;
         std::string finalBackupFile;
-        if (compressEnabled) {
-            // 压缩并复制文件，添加.huff扩展名
+        if (compressEnabled && file.isRegularFile()) {
+            // 仅对普通文件进行压缩，添加.huff扩展名
             finalBackupFile = backupFile + ".huff";
             success = FileSystem::copyAndCompressFile(file.getFilePath().string(), finalBackupFile);
         } else {
-            // 普通复制文件
+            // 对非普通文件（目录、符号链接、设备文件等）直接复制，不压缩
             finalBackupFile = backupFile;
             success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
         }

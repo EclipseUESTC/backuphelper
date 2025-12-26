@@ -22,14 +22,54 @@
 ### 环境要求
 - C++17 兼容编译器 (GCC 9+, Clang 10+, MSVC 2019+)
 - CMake 3.16+
-- Qt 5.15+ (图形界面)
-- 系统依赖：Windows
+- OpenSSL 1.1.x+ (加密功能)
+- 系统支持：Windows、Linux
 
-### 构建步骤
+### Windows 构建步骤
 ```bash
 git clone [<项目地址>](https://github.com/EclipseUESTC/backuphelper.git)
 cd <项目目录>
 mkdir build && cd build
 cmake ..
+cmake --build . --config Release
+.Release\BackupHelper.exe
+```
+
+### Linux 构建步骤
+
+#### 1. 安装依赖
+```bash
+# Ubuntu/Debian 系统
+sudo apt update
+sudo apt install build-essential cmake libssl-dev
+
+# CentOS/RHEL 系统
+sudo yum groupinstall "Development Tools"
+sudo yum install cmake3 openssl-devel
+```
+
+#### 2. 编译和运行
+```bash
+git clone [<项目地址>](https://github.com/EclipseUESTC/backuphelper.git)
+cd <项目目录>
+
+# 使用提供的构建脚本
+chmod +x build_linux.sh
+./build_linux.sh
+
+# 或手动构建
+mkdir build && cd build
+cmake ..
 make -j$(nproc)
-./backup_tool
+./BackupHelper
+```
+
+#### 3. 构建脚本选项
+```bash
+./build_linux.sh [options]
+Options:
+  -h, --help      Show this help message
+  -t, --test      Run tests after building
+  -c, --clean     Clean build directory before building
+  -r, --run       Run the application after building
+```

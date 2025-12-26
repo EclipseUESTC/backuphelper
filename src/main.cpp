@@ -1,4 +1,3 @@
-#pragma execution_character_set("utf-8")
 #include <iostream>
 #include <string>
 #include <vector>
@@ -6,9 +5,18 @@
 #include <limits>
 #include <memory>
 
-// 在包含windows.h之前定义NOMINMAX宏，以避免max宏与std::max冲突
-#define NOMINMAX
-#include <windows.h> // 添加Windows API头文件
+// 跨平台头文件包含
+#ifdef _WIN32
+    // 在包含windows.h之前定义NOMINMAX宏，以避免max宏与std::max冲突
+    #define NOMINMAX
+    #include <windows.h> // 添加Windows API头文件
+    #pragma execution_character_set("utf-8")
+#else
+    #include <termios.h>
+    #include <unistd.h>
+    #include <cstring>
+#endif
+
 #include "core/BackupEngine.hpp"
 #include "core/Filter.hpp"
 #include "utils/ConsoleLogger.hpp"
@@ -16,8 +24,8 @@
 
 // 配置结构体定义
 struct AppConfig {
-    std::string sourceDir = "S:/code/backuphelper/testdata/source";
-    std::string backupDir = "S:/code/backuphelper/testdata/backup";
+    std::string sourceDir = "./testdata/source";
+    std::string backupDir = "./testdata/backup";
     std::vector<std::string> excludedPaths;
     std::vector<std::string> includedExtensions;
     bool useFilters = false;
@@ -214,7 +222,12 @@ public:
         // 如果没有有效的命令行参数，则显示交互式菜单
         int choice;
         do {
-            system("cls");  // 在Windows系统清屏
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
             displayMenu();
             std::cout << "Please choose your operation [0-5]: ";
             
@@ -286,19 +299,36 @@ public:
         while (hasEncryptedFiles && !config.password.empty()) {
             std::cout << "\nEncrypted backup files found. Enter password: ";
             
-            // 隐藏密码输入
-            HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
-            DWORD mode;
-            GetConsoleMode(hConsole, &mode);
-            SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
-            
             std::string tempPassword;
             // 清除输入缓冲区中的换行符
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::getline(std::cin, tempPassword);
             
-            // 恢复控制台模式
-            SetConsoleMode(hConsole, mode);
+            // 跨平台密码输入（无回显）
+            #ifdef _WIN32
+                // Windows实现
+                HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
+                DWORD mode;
+                GetConsoleMode(hConsole, &mode);
+                SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
+                
+                std::getline(std::cin, tempPassword);
+                
+                // 恢复控制台模式
+                SetConsoleMode(hConsole, mode);
+            #else
+                // Linux/Unix实现
+                struct termios oldt, newt;
+                tcgetattr(STDIN_FILENO, &oldt);
+                newt = oldt;
+                newt.c_lflag &= ~(ECHO);
+                tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+                
+                std::getline(std::cin, tempPassword);
+                
+                // 恢复终端设置
+                tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+            #endif
+            
             std::cout << "\n";
             
             // 临时设置密码
@@ -314,7 +344,7 @@ public:
     
     void performReset() override {
         // 要复制的源目录
-        std::string testSourceDir = "S:/code/backuphelper/test_source";
+        std::string testSourceDir = "./test_source";
         
         // 获取当前配置
         AppConfig& config = controller.getConfig();
@@ -393,7 +423,12 @@ public:
         int choice;
         
         do {
-            system("cls");
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
             std::cout << "=== Filter Management ===\n";
             std::cout << "Filter Status: " << (config.useFilters ? "Enabled" : "Disabled") << "\n\n";
             std::cout << "[1] Toggle Filter Status\n";
@@ -485,7 +520,12 @@ private:
         int choice;
         
         do {
-            system("cls");
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
             std::cout << "=== Excluded Paths Management ===\n\n";
             if (config.excludedPaths.empty()) {
                 std::cout << "No excluded paths defined.\n\n";
@@ -552,7 +592,12 @@ private:
         int choice;
         
         do {
-            system("cls");
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
             std::cout << "=== Included Extensions Management ===\n\n";
             if (config.includedExtensions.empty()) {
                 std::cout << "No included extensions defined (all files included).\n\n";
@@ -737,16 +782,32 @@ private:
         // 清除输入缓冲区中的换行符
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
-        // Read password with no echo (Note: This works on Windows)
-        HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
-        DWORD mode;
-        GetConsoleMode(hConsole, &mode);  // 修复：传递指向mode的指针
-        SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
+        // 跨平台密码输入（无回显）
+        #ifdef _WIN32
+            // Windows实现
+            HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
+            DWORD mode;
+            GetConsoleMode(hConsole, &mode);
+            SetConsoleMode(hConsole, mode & ~ENABLE_ECHO_INPUT);
+            
+            std::getline(std::cin, newPassword);
+            
+            // 恢复控制台模式
+            SetConsoleMode(hConsole, mode);
+        #else
+            // Linux/Unix实现
+            struct termios oldt, newt;
+            tcgetattr(STDIN_FILENO, &oldt);
+            newt = oldt;
+            newt.c_lflag &= ~(ECHO);
+            tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+            
+            std::getline(std::cin, newPassword);
+            
+            // 恢复终端设置
+            tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        #endif
         
-        std::getline(std::cin, newPassword);
-        
-        // Restore console mode
-        SetConsoleMode(hConsole, mode);
         std::cout << "\n";
         
         config.password = newPassword;

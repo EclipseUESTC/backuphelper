@@ -3,7 +3,11 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-#include <windows.h>
+
+// 仅在Windows平台包含windows.h头文件
+#ifdef _WIN32
+    #include <windows.h>
+#endif
 
 File::File(): fileSize(0), fileType(fs::file_type::none) {}
 
