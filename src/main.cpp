@@ -24,8 +24,8 @@
 
 // 配置结构体定义
 struct AppConfig {
-    std::string sourceDir = "./testdata/source";
-    std::string backupDir = "./testdata/backup";
+    std::string sourceDir = "/home/huang-nan/backup_test";
+    std::string backupDir = "/home/huang-nan/backup_dest";
     std::vector<std::string> excludedPaths;
     std::vector<std::string> includedExtensions;
     bool useFilters = false;

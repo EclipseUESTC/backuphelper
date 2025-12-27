@@ -3,6 +3,7 @@
 #include "HuffmanCompressor.hpp"
 #include <iostream>  // 仅用于调试（可选），正式版可移除
 #include <stdexcept>
+#include <string.h>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -42,87 +43,113 @@ bool FileSystem::createDirectories(const std::string& path) {
 }
 
 bool FileSystem::copyFile(const std::string& source, const std::string& destination) {
+    std::cout << "DEBUG: copyFile called for: " << source << " -> " << destination << std::endl;
+    
     // 确保目标目录存在
     fs::path destPath(destination);
     if (!destPath.parent_path().empty()) {
-        if (!createDirectories(destPath.parent_path().string())) {
-            std::cerr << "Error: Failed to create directories for " << destPath.parent_path().string() << std::endl;
+        std::error_code ec;
+        fs::create_directories(destPath.parent_path(), ec);
+        if (ec) {
+            std::cerr << "Error: Failed to create directories for " << destPath.parent_path() << std::endl;
             return false;
         }
     }
 
-    std::error_code ec;
     fs::path sourcePath(source);
-    fs::file_status status = fs::status(sourcePath, ec);
-    if (ec) {
-        std::cerr << "Error: Failed to get file status for " << source << " (" << ec.message() << ")" << std::endl;
-        return false;
-    }
-
-    // 根据文件类型执行不同的复制操作
-    if (fs::is_regular_file(status)) {
-        // 普通文件，使用原有的复制逻辑
-        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
-            std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
-            return false;
-        }
-    } else if (fs::is_directory(status)) {
-        // 目录文件，创建目录
-        if (!fs::create_directories(destination, ec)) {
-            // 目录已存在是正常情况，不是错误
-            if (ec && ec.value() != ERROR_ALREADY_EXISTS) {
-                std::cerr << "Error: Failed to create directory " << destination << " (" << ec.message() << ")" << std::endl;
-                return false;
-            }
-        }
-    } else if (fs::is_symlink(status)) {
-        // 符号链接文件，复制符号链接本身
+    std::error_code ec;
+    
+    // 关键：先检查是否是符号链接
+    if (fs::is_symlink(sourcePath)) {
+        std::cout << "DEBUG: Source is a symbolic link" << std::endl;
+        
+        // 读取符号链接目标
         fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
         if (ec) {
             std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
             return false;
         }
         
-        // 先删除已存在的符号链接或文件
+        std::cout << "DEBUG: Symbolic link target: " << symlinkTarget << std::endl;
+        
+        // 删除已存在的目标
         if (fs::exists(destPath, ec)) {
             fs::remove(destPath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to remove existing file " << destination << " (" << ec.message() << ")" << std::endl;
+                std::cerr << "Error: Failed to remove existing file " << destination << std::endl;
                 return false;
             }
         }
         
-        fs::create_symlink(symlinkTarget, destPath, ec);
+        // 创建符号链接（使用相对路径）
+        // 计算相对于目标目录的相对路径
+        fs::path relativeTarget;
+        if (symlinkTarget.is_absolute()) {
+            relativeTarget = symlinkTarget;
+        } else {
+            // 保持原有的相对路径
+            relativeTarget = symlinkTarget;
+        }
+        
+        std::cout << "DEBUG: Creating symlink to: " << relativeTarget << std::endl;
+        fs::create_symlink(relativeTarget, destPath, ec);
         if (ec) {
-            std::cerr << "Error: Failed to create symlink " << destination << " (" << ec.message() << ")" << std::endl;
+            std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
+                     << " (" << ec.message() << ")" << std::endl;
             return false;
         }
+        
+        std::cout << "DEBUG: Successfully created symbolic link" << std::endl;
+        return true;
     }
-    #ifdef __linux__
-    else if (fs::is_character_file(status) || fs::is_block_file(status) || fs::is_fifo(status) || fs::is_socket(status)) {
-        // Linux特殊文件：字符设备、块设备、管道、套接字
-        // 使用mknod命令或特殊系统调用创建
-        // 这里简化处理，只在Linux上尝试复制设备文件
-        struct stat st;
-        if (stat(source.c_str(), &st) == 0) {
-            // 创建相同类型和权限的文件
-            if (mknod(destination.c_str(), st.st_mode, st.st_rdev) != 0) {
-                std::cerr << "Error: Failed to create special file " << destination << " (" << strerror(errno) << ")" << std::endl;
+    
+    // 如果不是符号链接，使用 symlink_status 检查类型
+    auto link_status = fs::symlink_status(sourcePath, ec);
+    if (ec) {
+        std::cerr << "Error: Failed to get file status for " << source << " (" << ec.message() << ")" << std::endl;
+        return false;
+    }
+    
+    std::cout << "DEBUG: File type (via symlink_status): ";
+    if (fs::is_regular_file(link_status)) {
+        std::cout << "Regular file" << std::endl;
+        
+        // 普通文件
+        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
+            std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination 
+                     << " (" << ec.message() << ")" << std::endl;
+            return false;
+        }
+        
+    } else if (fs::is_directory(link_status)) {
+        std::cout << "Directory" << std::endl;
+        
+        // 目录 - 只需要创建，内容会在遍历时处理
+        if (!fs::exists(destPath, ec)) {
+            fs::create_directories(destPath, ec);
+            if (ec) {
+                std::cerr << "Error: Failed to create directory " << destination << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
-        } else {
-            std::cerr << "Error: Failed to get stat for special file " << source << " (" << strerror(errno) << ")" << std::endl;
+        }
+        
+    } else if (fs::is_fifo(link_status)) {
+        std::cout << "FIFO" << std::endl;
+        
+        // 命名管道
+        if (fs::exists(destPath, ec)) {
+            fs::remove(destPath, ec);
+        }
+        
+        if (mkfifo(destination.c_str(), 0666) != 0) {
+            std::cerr << "Error: Failed to create FIFO " << destination << " (" << strerror(errno) << ")" << std::endl;
             return false;
         }
-    }
-    #endif
-    else {
-        // 其他类型的文件，使用原有的复制逻辑尝试复制
-        std::cerr << "Warning: Unknown file type for " << source << ", attempting regular copy" << std::endl;
-        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
-            std::cerr << "Error: Failed to copy unknown file type from " << source << " to " << destination << " (" << ec.message() << ")" << std::endl;
-            return false;
-        }
+        
+    } else {
+        std::cout << "Unknown" << std::endl;
+        std::cerr << "Error: Unsupported file type for " << source << std::endl;
+        return false;
     }
     
     return true;

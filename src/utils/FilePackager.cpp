@@ -24,7 +24,7 @@ bool FilePackager::packageFiles(const std::vector<std::string>& inputFiles, cons
         outFile.write(reinterpret_cast<const char*>(&metadataOffset), sizeof(metadataOffset));
 
         // 收集文件元数据
-        std::vector<FileMetadata> metadata;
+        std::vector<PackagerFileMetadata> metadata;
         uint64_t currentOffset = sizeof(metadataOffset);
 
         // 获取输出文件的父目录路径，用于计算相对路径
@@ -45,7 +45,7 @@ bool FilePackager::packageFiles(const std::vector<std::string>& inputFiles, cons
             inFile.seekg(0, std::ios::beg);
 
             // 创建文件元数据 - 保存相对路径而仅仅是文件名
-            FileMetadata fileMeta;
+            PackagerFileMetadata fileMeta;
             // 计算相对于输出目录的路径
             fs::path filePath(inputFile);
             fileMeta.filename = fs::relative(filePath, outputDir).string();
@@ -102,7 +102,7 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
         inFile.seekg(metadataOffset, std::ios::beg);
 
         // 读取元数据
-        std::vector<FileMetadata> metadata;
+        std::vector<PackagerFileMetadata> metadata;
         if (!readMetadata(inFile, metadata)) {
             inFile.close();
             return false;
@@ -154,7 +154,7 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
     }
 }
 
-bool FilePackager::writeMetadata(const std::vector<FileMetadata>& metadata, std::ofstream& outFile) {
+bool FilePackager::writeMetadata(const std::vector<PackagerFileMetadata>& metadata, std::ofstream& outFile) {
     try {
         // 写入元数据数量
         uint32_t metadataCount = metadata.size();
@@ -168,8 +168,9 @@ bool FilePackager::writeMetadata(const std::vector<FileMetadata>& metadata, std:
             outFile.write(fileMeta.filename.c_str(), filenameLength);
 
             // 写入文件大小、偏移量和压缩标志
-            outFile.write(reinterpret_cast<const char*>(&fileMeta.fileSize), sizeof(fileMeta.fileSize));
-            outFile.write(reinterpret_cast<const char*>(&fileMeta.offset), sizeof(fileMeta.offset));
+            uint64_t tempSize = fileMeta.fileSize, tempOffset = fileMeta.offset;
+            outFile.write(reinterpret_cast<const char*>(&tempSize), sizeof(tempSize));
+            outFile.write(reinterpret_cast<const char*>(&tempOffset), sizeof(tempOffset));
             outFile.write(reinterpret_cast<const char*>(&fileMeta.isCompressed), sizeof(fileMeta.isCompressed));
         }
 
@@ -181,7 +182,7 @@ bool FilePackager::writeMetadata(const std::vector<FileMetadata>& metadata, std:
     }
 }
 
-bool FilePackager::readMetadata(std::ifstream& inFile, std::vector<FileMetadata>& metadata) {
+bool FilePackager::readMetadata(std::ifstream& inFile, std::vector<PackagerFileMetadata>& metadata) {
     try {
         // 读取元数据数量
         uint32_t metadataCount = 0;
@@ -189,7 +190,7 @@ bool FilePackager::readMetadata(std::ifstream& inFile, std::vector<FileMetadata>
 
         // 读取每个文件的元数据
         for (uint32_t i = 0; i < metadataCount; i++) {
-            FileMetadata fileMeta;
+            PackagerFileMetadata fileMeta;
 
             // 读取文件名
             uint32_t filenameLength = 0;
@@ -198,8 +199,11 @@ bool FilePackager::readMetadata(std::ifstream& inFile, std::vector<FileMetadata>
             inFile.read(&fileMeta.filename[0], filenameLength);
 
             // 读取文件大小、偏移量和压缩标志
-            inFile.read(reinterpret_cast<char*>(&fileMeta.fileSize), sizeof(fileMeta.fileSize));
-            inFile.read(reinterpret_cast<char*>(&fileMeta.offset), sizeof(fileMeta.offset));
+            uint64_t tempSize, tempOffset;
+            inFile.read(reinterpret_cast<char*>(tempSize), sizeof(tempSize));
+            inFile.read(reinterpret_cast<char*>(tempOffset), sizeof(tempOffset));
+            fileMeta.fileSize = tempSize;
+            fileMeta.offset = tempOffset;
             inFile.read(reinterpret_cast<char*>(&fileMeta.isCompressed), sizeof(fileMeta.isCompressed));
 
             metadata.push_back(fileMeta);

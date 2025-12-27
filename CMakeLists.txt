@@ -29,7 +29,7 @@ if(WIN32)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
 
-FetchContent_MakeAvailable(googletest)
+find_package(GTest REQUIRED)
 
 # 诊断信息
 message(STATUS "=== Google Test诊断信息 ===")
