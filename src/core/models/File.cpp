@@ -89,31 +89,31 @@ bool File::exists() const {
 }
 
 bool File::isDirectory() const {
-    return fs::is_directory(this->filePath);
+    return fileType == fs::file_type::directory;
 }
 
 bool File::isRegularFile() const {
-    return fs::is_regular_file(this->filePath);
+    return fileType == fs::file_type::regular;
 }
 
 bool File::isSymbolicLink() const {
-    return fs::is_symlink(this->filePath);
+    return fileType == fs::file_type::symlink;
 }
 
 bool File::isFIFO() const {
-    return fs::is_fifo(this->filePath);
+    return fileType == fs::file_type::fifo;
 }
 
 bool File::isCharacterDevice() const {
-    return fs::is_character_file(this->filePath);
+    return fileType == fs::file_type::character;
 }
 
 bool File::isBlockDevice() const {
-    return fs::is_block_file(this->filePath);
+    return fileType == fs::file_type::block;
 }
 
 bool File::isSocket() const {
-    return fs::is_socket(this->filePath);
+    return fileType == fs::file_type::socket;
 }
 
 fs::path File::getRelativePath(const fs::path& base) const {

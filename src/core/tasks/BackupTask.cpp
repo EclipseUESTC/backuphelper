@@ -53,14 +53,10 @@ bool BackupTask::execute() {
         return true;
     }
     int regularCount = 0, symlinkCount = 0, dirCount = 0, otherCount = 0;
-    namespace fs = std::filesystem;
     for (const auto& file : files) {
-        fs::path p = file.getFilePath();
-        std::error_code ec;
-        auto status = fs::status(p, ec);
-        if (fs::is_regular_file(status)) regularCount++;
-        else if (fs::is_symlink(status)) symlinkCount++;
-        else if (fs::is_directory(status)) dirCount++;
+        if (file.isRegularFile()) regularCount++;
+        else if (file.isSymbolicLink()) symlinkCount++;
+        else if (file.isDirectory()) dirCount++;
         else otherCount++;
     }
     
