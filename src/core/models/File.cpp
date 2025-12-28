@@ -19,8 +19,10 @@ void File::initialize(const fs::path& path) {
     this->filePath = path;
     this->fileName = path.filename().string();
     try {
-        fs::file_status status = fs::status(path);
+        // 使用symlink_status获取文件状态，不解析符号链接
+        fs::file_status status = fs::symlink_status(path);
         this->fileType = status.type();
+        
         if (fs::is_regular_file(status)) {
             this->fileSize = fs::file_size(path);
             
@@ -38,6 +40,17 @@ void File::initialize(const fs::path& path) {
             this->fileSize = 0;
             
             // 对于目录，也获取其修改时间
+            auto fileTime = fs::last_write_time(path);
+            auto fileClockNow = fs::file_time_type::clock::now();
+            auto sysClockNow = std::chrono::system_clock::now();
+            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                fileTime - fileClockNow + sysClockNow);
+            this->lastModifiedTime = tp;
+        } else if (fs::is_symlink(status)) {
+            // 对于符号链接，获取其大小为0
+            this->fileSize = 0;
+            
+            // 对于符号链接，也获取其修改时间
             auto fileTime = fs::last_write_time(path);
             auto fileClockNow = fs::file_time_type::clock::now();
             auto sysClockNow = std::chrono::system_clock::now();

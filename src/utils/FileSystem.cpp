@@ -43,7 +43,6 @@ bool FileSystem::createDirectories(const std::string& path) {
 }
 
 bool FileSystem::copyFile(const std::string& source, const std::string& destination) {
-    std::cout << "DEBUG: copyFile called for: " << source << " -> " << destination << std::endl;
     
     // 确保目标目录存在
     fs::path destPath(destination);
@@ -61,16 +60,12 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     
     // 关键：先检查是否是符号链接
     if (fs::is_symlink(sourcePath)) {
-        std::cout << "DEBUG: Source is a symbolic link" << std::endl;
-        
         // 读取符号链接目标
         fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
         if (ec) {
             std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
             return false;
         }
-        
-        std::cout << "DEBUG: Symbolic link target: " << symlinkTarget << std::endl;
         
         // 删除已存在的目标
         if (fs::exists(destPath, ec)) {
@@ -91,7 +86,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             relativeTarget = symlinkTarget;
         }
         
-        std::cout << "DEBUG: Creating symlink to: " << relativeTarget << std::endl;
         fs::create_symlink(relativeTarget, destPath, ec);
         if (ec) {
             std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
@@ -99,7 +93,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             return false;
         }
         
-        std::cout << "DEBUG: Successfully created symbolic link" << std::endl;
         return true;
     }
     
@@ -110,9 +103,7 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         return false;
     }
     
-    std::cout << "DEBUG: File type (via symlink_status): ";
     if (fs::is_regular_file(link_status)) {
-        std::cout << "Regular file" << std::endl;
         
         // 普通文件
         if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
@@ -122,7 +113,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         }
         
     } else if (fs::is_directory(link_status)) {
-        std::cout << "Directory" << std::endl;
         
         // 目录 - 只需要创建，内容会在遍历时处理
         if (!fs::exists(destPath, ec)) {
@@ -134,20 +124,24 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         }
         
     } else if (fs::is_fifo(link_status)) {
-        std::cout << "FIFO" << std::endl;
         
         // 命名管道
         if (fs::exists(destPath, ec)) {
             fs::remove(destPath, ec);
         }
         
-        if (mkfifo(destination.c_str(), 0666) != 0) {
-            std::cerr << "Error: Failed to create FIFO " << destination << " (" << strerror(errno) << ")" << std::endl;
+        #ifdef _WIN32
+            // Windows不支持直接创建类似Unix的命名管道文件
+            std::cerr << "Error: FIFO files are not supported on Windows" << std::endl;
             return false;
-        }
+        #else
+            if (mkfifo(destination.c_str(), 0666) != 0) {
+                std::cerr << "Error: Failed to create FIFO " << destination << " (" << strerror(errno) << ")" << std::endl;
+                return false;
+            }
+        #endif
         
     } else {
-        std::cout << "Unknown" << std::endl;
         std::cerr << "Error: Unsupported file type for " << source << std::endl;
         return false;
     }
@@ -164,7 +158,12 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
     }
 
     try {
-        for (const auto& entry : fs::recursive_directory_iterator(directory, ec)) {
+        // 使用directory_options::skip_permission_denied跳过权限不足的目录
+        // 不递归进入符号链接指向的目录（默认行为）
+        for (const auto& entry : fs::recursive_directory_iterator(
+                 directory, 
+                 fs::directory_options::skip_permission_denied, 
+                 ec)) {
             if (ec) break;
             // 收集所有类型的文件，包括目录、符号链接、设备文件等
             files.emplace_back(entry.path());
@@ -229,6 +228,13 @@ bool FileSystem::copyAndCompressFile(const std::string& source, const std::strin
 }
 
 bool FileSystem::decompressAndCopyFile(const std::string& source, const std::string& destination) {
+    // 先检查源文件是否是符号链接
+    if (fs::is_symlink(source)) {
+        // 符号链接直接复制，不尝试解压
+        std::cerr << "Info: Source is a symlink, copying directly" << std::endl;
+        return copyFile(source, destination);
+    }
+    
     HuffmanCompressor compressor;
     
     // 先尝试解压
@@ -328,7 +334,14 @@ bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& 
         const auto& sourcePath = entry.path();
         const auto destPath = fs::path(destDir) / sourcePath.filename();
         
-        if (entry.is_directory(ec)) {
+        // 关键：先检查是否是符号链接
+        if (fs::is_symlink(sourcePath)) {
+            // 使用copyFile函数处理符号链接
+            if (!copyFile(sourcePath.string(), destPath.string())) {
+                std::cerr << "copyDirectory: Failed to copy symlink: " << sourcePath.string() << " to " << destPath.string() << std::endl;
+                return false;
+            }
+        } else if (entry.is_directory(ec)) {
             if (!copyDirectory(sourcePath.string(), destPath.string())) {
                 std::cerr << "copyDirectory: Failed to copy subdirectory: " << sourcePath.string() << " to " << destPath.string() << std::endl;
                 return false;
