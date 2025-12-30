@@ -6,6 +6,7 @@
 #include <string.h>
 #include <functional>
 #include <algorithm>
+#include <iomanip>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -66,19 +67,10 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     std::error_code ec;
     
     // 检查源文件和目标文件是否相同，避免循环复制
+    // 对于符号链接，我们不使用canonical，因为它会解析链接
+    // 直接比较路径字符串，避免符号链接解析问题
     if (sourcePath.string() == destPath.string()) {
         return true;
-    }
-    
-    // 关键：先检查目标文件是否已经存在
-    if (fs::exists(destPath, ec)) {
-        // 如果目标文件已经存在，并且是真实文件（非符号链接），则保留真实文件
-        // 只有当源文件是真实文件且目标文件是符号链接时，才替换
-        fs::file_status destStatus = fs::symlink_status(destPath, ec);
-        if (destStatus.type() == fs::file_type::regular || destStatus.type() == fs::file_type::directory) {
-            // 目标文件是真实文件或目录，保留它，不被符号链接覆盖
-            return true;
-        }
     }
     
     // 关键：先检查是否是符号链接
@@ -105,6 +97,7 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             relativeTarget = symlinkTarget;
         } else {
             // 对于相对路径，直接使用原始相对路径，不尝试解析
+            // 这样可以避免循环链接问题，同时保持符号链接的相对特性
             relativeTarget = symlinkTarget;
         }
         
@@ -188,6 +181,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
                  fs::directory_options::skip_permission_denied, 
                  ec)) {
             if (ec) break;
+            // 收集所有类型的文件，包括符号链接
             files.emplace_back(entry.path());
         }
         
@@ -212,7 +206,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
         };
         collectEmptyDirs(directory);
         
-        // 确保真实文件在符号链接之前被处理
+        // 确保符号链接被正确处理，不被其他文件类型覆盖
         // 按文件类型排序：真实文件 -> 目录 -> 符号链接 -> 其他类型
         std::sort(files.begin(), files.end(), [](const File& a, const File& b) {
             // 真实文件优先级最高
@@ -261,21 +255,34 @@ std::string FileSystem::getRelativePath(const std::string& path, const std::stri
 bool FileSystem::compressFile(const std::string& source, const std::string& destination) {
     HuffmanCompressor compressor;
     
+    // 获取原始文件大小
+    uint64_t originalSize = getFileSize(source);
+    
     // 先尝试压缩
     if (!compressor.compressFile(source, destination)) {
         return false;
     }
     
     // 检查压缩效率
-    uint64_t originalSize = getFileSize(source);
     uint64_t compressedSize = getFileSize(destination);
     
     // 如果压缩后的文件没有变小，删除压缩文件并返回false
     // 让调用者决定如何处理，避免将原始文件复制到.huff文件中
     if (compressedSize >= originalSize) {
         std::filesystem::remove(destination);
+        std::cout << "Info: File compression skipped for " << source << std::endl;
+        std::cout << "  Original size: " << originalSize << " bytes" << std::endl;
+        std::cout << "  Compressed size: " << compressedSize << " bytes" << std::endl;
+        std::cout << "  Compression not performed (compressed file is larger than original)" << std::endl;
         return false;
     }
+    
+    // 压缩成功，打印压缩效率
+    double compressionRatio = static_cast<double>(originalSize - compressedSize) / originalSize * 100;
+    std::cout << "Info: File compressed successfully: " << source << std::endl;
+    std::cout << "  Original size: " << originalSize << " bytes" << std::endl;
+    std::cout << "  Compressed size: " << compressedSize << " bytes" << std::endl;
+    std::cout << "  Compression ratio: " << std::fixed << std::setprecision(2) << compressionRatio << "%" << std::endl;
     
     return true;
 }

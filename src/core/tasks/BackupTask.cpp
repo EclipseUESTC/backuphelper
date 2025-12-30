@@ -15,6 +15,7 @@ bool BackupTask::execute() {
     
     if (!FileSystem::exists(sourcePath)) {
         logger->error("Source directory not found: " + sourcePath);
+        logger->error("Please check if the source directory path is correct.");
         status = TaskStatus::FAILED;
         return false;
     }
@@ -22,6 +23,7 @@ bool BackupTask::execute() {
     // 先确保顶级备份目录存在
     if (!FileSystem::createDirectories(backupPath)) {
         logger->error("Failed to create base backup directory: " + backupPath);
+        logger->error("Please check if you have permission to create directories at this location.");
         status = TaskStatus::FAILED;
         return false;
     }

@@ -13,6 +13,17 @@ bool RestoreTask::execute() {
     logger->info("Starting restore: " + backupPath + " -> " + restorePath);
     status = TaskStatus::RUNNING;
     
+    // 检查还原目录是否存在，如果不存在则尝试创建
+    if (!FileSystem::exists(restorePath)) {
+        logger->info("Restore directory doesn't exist, trying to create it: " + restorePath);
+        if (!FileSystem::createDirectories(restorePath)) {
+            logger->error("Failed to create restore directory: " + restorePath);
+            logger->error("Please check if you have permission to create directories at this location.");
+            status = TaskStatus::FAILED;
+            return false;
+        }
+    }
+    
     // 获取备份文件列表
     auto files = FileSystem::getAllFiles(backupPath);
     logger->info("Found " + std::to_string(files.size()) + " files to restore");

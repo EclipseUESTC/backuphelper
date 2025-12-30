@@ -391,8 +391,15 @@ public:
         std::cin.ignore();
         std::getline(std::cin, newPath);
         if (!newPath.empty()) {
-            config.sourceDir = newPath;
-            std::cout << "Source directory updated to: " << config.sourceDir << "\n";
+            // 验证路径是否存在或可创建
+            if (FileSystem::exists(newPath) || FileSystem::createDirectories(newPath)) {
+                config.sourceDir = newPath;
+                std::cout << "Source directory updated to: " << config.sourceDir << "\n";
+            } else {
+                std::cout << "Warning: Path does not exist and cannot be created: " << newPath << "\n";
+                std::cout << "Please check if you have permission to access this location.\n";
+                std::cout << "Source directory remains unchanged: " << config.sourceDir << "\n";
+            }
         }
         waitForEnter();
     }
@@ -404,8 +411,15 @@ public:
         std::cin.ignore();
         std::getline(std::cin, newPath);
         if (!newPath.empty()) {
-            config.backupDir = newPath;
-            std::cout << "Backup directory updated to: " << config.backupDir << "\n";
+            // 验证路径是否存在或可创建
+            if (FileSystem::exists(newPath) || FileSystem::createDirectories(newPath)) {
+                config.backupDir = newPath;
+                std::cout << "Backup directory updated to: " << config.backupDir << "\n";
+            } else {
+                std::cout << "Warning: Path does not exist and cannot be created: " << newPath << "\n";
+                std::cout << "Please check if you have permission to access this location.\n";
+                std::cout << "Backup directory remains unchanged: " << config.backupDir << "\n";
+            }
         }
         waitForEnter();
     }
