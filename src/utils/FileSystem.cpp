@@ -82,27 +82,18 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             return false;
         }
         
-        // 检查目标文件是否已经存在
-        if (fs::exists(destPath, ec)) {
-            // 如果目标文件已经存在，检查其类型
-            fs::file_status destStatus = fs::symlink_status(destPath, ec);
-            if (destStatus.type() == fs::file_type::regular || destStatus.type() == fs::file_type::directory) {
-                // 目标文件是真实文件或目录，保留它，不被符号链接覆盖
-                // 打印信息，说明跳过了符号链接的创建
-                std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
-                std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
-                return true;
-            } else if (destStatus.type() == fs::file_type::symlink) {
-                // 目标文件是符号链接，可以替换
-                fs::remove(destPath, ec);
-                if (ec) {
-                    std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
-                    return false;
-                }
+        // 如果目标文件是符号链接，先删除它，以便创建新的符号链接
+        if (fs::is_symlink(destPath, ec)) {
+            fs::remove(destPath, ec);
+            if (ec) {
+                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                return false;
             }
         }
         
-        // 创建符号链接，正确计算相对路径
+        // 无论目标文件是否存在，都创建符号链接
+        // 注意：如果目标文件已经存在且是真实文件，符号链接会与真实文件共存
+        // 因为它们的路径不同（真实文件和符号链接有不同的文件名）
         fs::path relativeTarget;
         if (symlinkTarget.is_absolute()) {
             relativeTarget = symlinkTarget;
