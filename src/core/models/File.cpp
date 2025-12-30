@@ -24,39 +24,48 @@ void File::initialize(const fs::path& path) {
         this->fileType = status.type();
         
         if (fs::is_regular_file(status)) {
-            this->fileSize = fs::file_size(path);
+            // 获取文件大小，添加错误处理
+            std::error_code ec;
+            this->fileSize = fs::file_size(path, ec);
+            if (ec) {
+                this->fileSize = 0;
+            }
             
-            // 使用C++17标准的文件时间获取方式
-            auto fileTime = fs::last_write_time(path);
-            
-            // 将文件时间转换为系统时钟时间点
-            // 使用正确的转换方法：将file_time_type转换为system_clock::time_point
-            auto fileClockNow = fs::file_time_type::clock::now();
-            auto sysClockNow = std::chrono::system_clock::now();
-            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                fileTime - fileClockNow + sysClockNow);
-            this->lastModifiedTime = tp;
+            // 使用C++17标准的文件时间获取方式，添加错误处理
+            std::error_code timeEc;
+            auto fileTime = fs::last_write_time(path, timeEc);
+            if (!timeEc) {
+                // 将文件时间转换为系统时钟时间点
+                // 使用正确的转换方法：将file_time_type转换为system_clock::time_point
+                auto fileClockNow = fs::file_time_type::clock::now();
+                auto sysClockNow = std::chrono::system_clock::now();
+                auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                    fileTime - fileClockNow + sysClockNow);
+                this->lastModifiedTime = tp;
+            }
         } else if (fs::is_directory(status)) {
             this->fileSize = 0;
             
-            // 对于目录，也获取其修改时间
-            auto fileTime = fs::last_write_time(path);
-            auto fileClockNow = fs::file_time_type::clock::now();
-            auto sysClockNow = std::chrono::system_clock::now();
-            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                fileTime - fileClockNow + sysClockNow);
-            this->lastModifiedTime = tp;
+            // 对于目录，获取其修改时间，添加错误处理
+            std::error_code timeEc;
+            auto fileTime = fs::last_write_time(path, timeEc);
+            if (!timeEc) {
+                auto fileClockNow = fs::file_time_type::clock::now();
+                auto sysClockNow = std::chrono::system_clock::now();
+                auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                    fileTime - fileClockNow + sysClockNow);
+                this->lastModifiedTime = tp;
+            }
         } else if (fs::is_symlink(status)) {
             // 对于符号链接，获取其大小为0
             this->fileSize = 0;
             
-            // 对于符号链接，也获取其修改时间
-            auto fileTime = fs::last_write_time(path);
-            auto fileClockNow = fs::file_time_type::clock::now();
-            auto sysClockNow = std::chrono::system_clock::now();
-            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                fileTime - fileClockNow + sysClockNow);
-            this->lastModifiedTime = tp;
+            // 对于符号链接，只获取链接本身的属性，不解析链接
+            // 注意：某些文件系统可能不支持获取符号链接的修改时间
+            // 所以如果获取失败，我们忽略并使用默认值
+            std::error_code timeEc;
+            // 这里不使用fs::last_write_time，因为它会解析符号链接
+            // 我们直接跳过获取符号链接的修改时间，避免循环链接问题
         }
     } catch (const std::exception& e) {
         std::cerr << "Error initializing file: " << e.what() << std::endl; 
@@ -120,7 +129,8 @@ fs::path File::getRelativePath(const fs::path& base) const {
     try {
         return fs::relative(this->filePath, base);
     } catch (const std::exception& ) {
-        return this->filePath;
+        // 如果计算相对路径失败（如循环链接），则使用文件名作为相对路径
+        return this->filePath.filename();
     }
 }
 

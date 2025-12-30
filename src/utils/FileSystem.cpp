@@ -58,6 +58,16 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     fs::path sourcePath(source);
     std::error_code ec;
     
+    // 检查源文件和目标文件是否相同，避免循环复制
+    std::error_code canonicalEc;
+    fs::path sourceCanonical = fs::canonical(sourcePath.parent_path(), canonicalEc);
+    fs::path destCanonical = fs::canonical(destPath.parent_path(), canonicalEc);
+    
+    // 如果源文件和目标文件路径相同，直接返回成功（或跳过）
+    if (sourceCanonical / sourcePath.filename() == destCanonical / destPath.filename()) {
+        return true;
+    }
+    
     // 关键：先检查是否是符号链接
     if (fs::is_symlink(sourcePath)) {
         // 读取符号链接目标
@@ -67,22 +77,22 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             return false;
         }
         
-        // 删除已存在的目标
+        // 删除已存在的目标，使用remove_all处理目录情况
         if (fs::exists(destPath, ec)) {
-            fs::remove(destPath, ec);
+            fs::remove_all(destPath, ec);
             if (ec) {
                 std::cerr << "Error: Failed to remove existing file " << destination << std::endl;
                 return false;
             }
         }
         
-        // 创建符号链接（使用相对路径）
-        // 计算相对于目标目录的相对路径
+        // 创建符号链接，正确计算相对路径
         fs::path relativeTarget;
         if (symlinkTarget.is_absolute()) {
             relativeTarget = symlinkTarget;
         } else {
-            // 保持原有的相对路径
+            // 对于相对路径，直接使用原始相对路径，不尝试解析
+            // 这样可以避免循环链接问题，同时保持符号链接的相对特性
             relativeTarget = symlinkTarget;
         }
         
