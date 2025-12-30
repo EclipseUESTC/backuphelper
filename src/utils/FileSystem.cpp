@@ -82,8 +82,9 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             return false;
         }
         
-        // 如果目标文件是符号链接，先删除它，以便创建新的符号链接
-        if (fs::is_symlink(destPath, ec)) {
+        // 无论目标文件是否存在，都尝试创建符号链接
+        // 但首先检查目标文件是否是符号链接，如果是则替换
+        if (fs::exists(destPath, ec) && fs::is_symlink(destPath, ec)) {
             fs::remove(destPath, ec);
             if (ec) {
                 std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
@@ -91,9 +92,7 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             }
         }
         
-        // 无论目标文件是否存在，都创建符号链接
-        // 注意：如果目标文件已经存在且是真实文件，符号链接会与真实文件共存
-        // 因为它们的路径不同（真实文件和符号链接有不同的文件名）
+        // 创建符号链接，正确计算相对路径
         fs::path relativeTarget;
         if (symlinkTarget.is_absolute()) {
             relativeTarget = symlinkTarget;
@@ -103,11 +102,23 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             relativeTarget = symlinkTarget;
         }
         
+        // 尝试创建符号链接
         fs::create_symlink(relativeTarget, destPath, ec);
         if (ec) {
-            std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
-                     << " (" << ec.message() << ")" << std::endl;
-            return false;
+            // 如果创建失败，检查是否是因为目标文件已经存在
+            if (ec.value() == static_cast<int>(std::errc::file_exists)) {
+                // 目标文件已经存在，并且不是符号链接
+                // 打印信息，说明跳过了符号链接创建
+                std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
+                std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
+                // 继续执行，不中断备份操作
+                return true;
+            } else {
+                // 其他错误，打印详细信息并返回失败
+                std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
+                         << " (" << ec.message() << ")" << std::endl;
+                return false;
+            }
         }
         
         return true;
