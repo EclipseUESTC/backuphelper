@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <functional>
+#include <algorithm>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -65,10 +66,19 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     std::error_code ec;
     
     // 检查源文件和目标文件是否相同，避免循环复制
-    // 对于符号链接，我们不使用canonical，因为它会解析链接
-    // 直接比较路径字符串，避免符号链接解析问题
     if (sourcePath.string() == destPath.string()) {
         return true;
+    }
+    
+    // 关键：先检查目标文件是否已经存在
+    if (fs::exists(destPath, ec)) {
+        // 如果目标文件已经存在，并且是真实文件（非符号链接），则保留真实文件
+        // 只有当源文件是真实文件且目标文件是符号链接时，才替换
+        fs::file_status destStatus = fs::symlink_status(destPath, ec);
+        if (destStatus.type() == fs::file_type::regular || destStatus.type() == fs::file_type::directory) {
+            // 目标文件是真实文件或目录，保留它，不被符号链接覆盖
+            return true;
+        }
     }
     
     // 关键：先检查是否是符号链接
@@ -95,7 +105,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             relativeTarget = symlinkTarget;
         } else {
             // 对于相对路径，直接使用原始相对路径，不尝试解析
-            // 这样可以避免循环链接问题，同时保持符号链接的相对特性
             relativeTarget = symlinkTarget;
         }
         
@@ -173,7 +182,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
     }
 
     try {
-        // 首先收集所有文件和非空目录
+        // 收集所有文件和目录
         for (const auto& entry : fs::recursive_directory_iterator(
                  directory, 
                  fs::directory_options::skip_permission_denied, 
@@ -182,13 +191,11 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
             files.emplace_back(entry.path());
         }
         
-        // 然后使用directory_iterator遍历所有目录，确保收集到所有空目录
-        // 注意：使用non-recursive模式遍历每个目录层级
+        // 收集空目录
         std::function<void(const fs::path&)> collectEmptyDirs = [&](const fs::path& dirPath) {
             for (const auto& entry : fs::directory_iterator(dirPath, ec)) {
                 if (ec) break;
                 if (fs::is_directory(entry.status())) {
-                    // 检查目录是否已经在files列表中
                     bool exists = false;
                     for (const auto& file : files) {
                         if (file.getFilePath() == entry.path()) {
@@ -196,18 +203,33 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
                             break;
                         }
                     }
-                    // 如果目录不在files列表中，添加它
                     if (!exists) {
                         files.emplace_back(entry.path());
                     }
-                    // 递归检查子目录
                     collectEmptyDirs(entry.path());
                 }
             }
         };
-        
-        // 开始收集空目录
         collectEmptyDirs(directory);
+        
+        // 确保真实文件在符号链接之前被处理
+        // 按文件类型排序：真实文件 -> 目录 -> 符号链接 -> 其他类型
+        std::sort(files.begin(), files.end(), [](const File& a, const File& b) {
+            // 真实文件优先级最高
+            if (a.isRegularFile() && !b.isRegularFile()) return true;
+            if (!a.isRegularFile() && b.isRegularFile()) return false;
+            
+            // 然后是目录
+            if (a.isDirectory() && !b.isDirectory()) return true;
+            if (!a.isDirectory() && b.isDirectory()) return false;
+            
+            // 然后是符号链接
+            if (!a.isSymbolicLink() && b.isSymbolicLink()) return true;
+            if (a.isSymbolicLink() && !b.isSymbolicLink()) return false;
+            
+            // 最后按路径排序
+            return a.getFilePath().string() < b.getFilePath().string();
+        });
     } catch (const fs::filesystem_error&) {
         // 忽略异常，返回已收集的文件（或空）
     }
