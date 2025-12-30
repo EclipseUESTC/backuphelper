@@ -82,12 +82,23 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             return false;
         }
         
-        // 删除已存在的目标，使用remove_all处理目录情况
+        // 检查目标文件是否已经存在
         if (fs::exists(destPath, ec)) {
-            fs::remove_all(destPath, ec);
-            if (ec) {
-                std::cerr << "Error: Failed to remove existing file " << destination << std::endl;
-                return false;
+            // 如果目标文件已经存在，检查其类型
+            fs::file_status destStatus = fs::symlink_status(destPath, ec);
+            if (destStatus.type() == fs::file_type::regular || destStatus.type() == fs::file_type::directory) {
+                // 目标文件是真实文件或目录，保留它，不被符号链接覆盖
+                // 打印信息，说明跳过了符号链接的创建
+                std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
+                std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
+                return true;
+            } else if (destStatus.type() == fs::file_type::symlink) {
+                // 目标文件是符号链接，可以替换
+                fs::remove(destPath, ec);
+                if (ec) {
+                    std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                    return false;
+                }
             }
         }
         
@@ -121,6 +132,15 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     if (fs::is_regular_file(link_status)) {
         
         // 普通文件
+        // 检查目标文件是否是符号链接，如果是则先删除
+        if (fs::is_symlink(destPath, ec)) {
+            fs::remove(destPath, ec);
+            if (ec) {
+                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                return false;
+            }
+        }
+        
         if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
             std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination 
                      << " (" << ec.message() << ")" << std::endl;
@@ -130,6 +150,15 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     } else if (fs::is_directory(link_status)) {
         
         // 目录 - 只需要创建，内容会在遍历时处理
+        // 检查目标文件是否是符号链接，如果是则先删除
+        if (fs::is_symlink(destPath, ec)) {
+            fs::remove(destPath, ec);
+            if (ec) {
+                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                return false;
+            }
+        }
+        
         if (!fs::exists(destPath, ec)) {
             fs::create_directories(destPath, ec);
             if (ec) {
