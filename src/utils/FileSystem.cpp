@@ -22,15 +22,20 @@ namespace fs = std::filesystem;
 
 bool FileSystem::exists(const std::string& path) {
     std::error_code ec;
-    bool result = fs::exists(path, ec);
+    // 使用symlink_status检查文件是否存在，不解析符号链接
+    fs::file_status status = fs::symlink_status(path, ec);
+    bool result = status.type() != fs::file_type::not_found && !ec;
     // 不抛出异常，静默处理错误（如权限不足）
-    return result && !ec;
+    return result;
 }
 
 bool FileSystem::createDirectories(const std::string& path) {
     // 如果目录已存在，直接返回成功
     std::error_code ec;
-    if (fs::exists(path, ec) && fs::is_directory(path, ec)) {
+    
+    // 使用symlink_status检查文件状态，不解析符号链接
+    fs::file_status status = fs::symlink_status(path, ec);
+    if (!ec && (status.type() == fs::file_type::directory || status.type() == fs::file_type::symlink)) {
         return true;
     }
     
@@ -163,7 +168,9 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
     std::vector<File> files;
     std::error_code ec;
 
-    if (!fs::exists(directory, ec) || !fs::is_directory(directory, ec)) {
+    // 使用symlink_status检查目录是否存在和是否为目录，不解析符号链接
+    fs::file_status status = fs::symlink_status(directory, ec);
+    if (ec || status.type() != fs::file_type::directory) {
         return files; // 返回空列表
     }
 
