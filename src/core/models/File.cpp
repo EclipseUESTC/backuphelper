@@ -137,10 +137,10 @@ void File::initialize(const fs::path& path) {
             }
         #else
             // Linux/Unix平台获取文件时间
-            struct stat st;
-            if (stat(path.string().c_str(), &st) == 0) {
-                this->creationTime = std::chrono::system_clock::from_time_t(st.st_ctime);
-                this->lastAccessTime = std::chrono::system_clock::from_time_t(st.st_atime);
+            struct stat st_time;
+            if (stat(path.string().c_str(), &st_time) == 0) {
+                this->creationTime = std::chrono::system_clock::from_time_t(st_time.st_ctime);
+                this->lastAccessTime = std::chrono::system_clock::from_time_t(st_time.st_atime);
             }
         #endif
         
