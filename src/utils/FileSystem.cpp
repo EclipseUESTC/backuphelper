@@ -121,6 +121,19 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             }
         }
         
+        // 复制符号链接的元数据（权限、时间戳等）
+        fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
+        if (ec) {
+            std::cerr << "Warning: Failed to copy symlink permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+        }
+        
+        // 复制符号链接的时间戳
+        std::error_code timeEc;
+        fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
+        if (timeEc) {
+            std::cerr << "Warning: Failed to copy symlink timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
+        }
+        
         return true;
     }
     
@@ -143,10 +156,23 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             }
         }
         
-        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing, ec)) {
+        if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing | fs::copy_options::copy_symlinks, ec)) {
             std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination 
                      << " (" << ec.message() << ")" << std::endl;
             return false;
+        }
+        
+        // 复制文件元数据（权限、时间戳等）
+        fs::permissions(destination, fs::status(source).permissions(), ec);
+        if (ec) {
+            std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+        }
+        
+        // 复制时间戳
+        std::error_code timeEc;
+        fs::last_write_time(destination, fs::last_write_time(source, timeEc), timeEc);
+        if (timeEc) {
+            std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
         }
         
     } else if (fs::is_directory(link_status)) {
@@ -167,6 +193,19 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
                 std::cerr << "Error: Failed to create directory " << destination << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
+        }
+        
+        // 复制目录的元数据（权限、时间戳等）
+        fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
+        if (ec) {
+            std::cerr << "Warning: Failed to copy directory permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+        }
+        
+        // 复制目录的时间戳
+        std::error_code timeEc;
+        fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
+        if (timeEc) {
+            std::cerr << "Warning: Failed to copy directory timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
         }
         
     } else if (fs::is_fifo(link_status)) {
@@ -209,7 +248,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
         // 收集所有文件和目录
         for (const auto& entry : fs::recursive_directory_iterator(
                  directory, 
-                 fs::directory_options::skip_permission_denied, 
+                 fs::directory_options::skip_permission_denied | fs::directory_options::follow_directory_symlink, 
                  ec)) {
             if (ec) break;
             // 收集所有类型的文件，包括符号链接
@@ -220,7 +259,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
         std::function<void(const fs::path&)> collectEmptyDirs = [&](const fs::path& dirPath) {
             for (const auto& entry : fs::directory_iterator(dirPath, ec)) {
                 if (ec) break;
-                if (fs::is_directory(entry.status())) {
+                if (fs::is_directory(entry.symlink_status())) {
                     bool exists = false;
                     for (const auto& file : files) {
                         if (file.getFilePath() == entry.path()) {
@@ -249,8 +288,8 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
             if (!a.isDirectory() && b.isDirectory()) return false;
             
             // 然后是符号链接
-            if (!a.isSymbolicLink() && b.isSymbolicLink()) return true;
-            if (a.isSymbolicLink() && !b.isSymbolicLink()) return false;
+            if (a.isSymbolicLink() && !b.isSymbolicLink()) return true;
+            if (!a.isSymbolicLink() && b.isSymbolicLink()) return false;
             
             // 最后按路径排序
             return a.getFilePath().string() < b.getFilePath().string();

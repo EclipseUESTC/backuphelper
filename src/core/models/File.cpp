@@ -3,13 +3,26 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 // 仅在Windows平台包含windows.h头文件
 #ifdef _WIN32
     #include <windows.h>
+#else
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <errno.h>
 #endif
 
-File::File(): fileSize(0), fileType(fs::file_type::none) {}
+File::File(): 
+    fileType(fs::file_type::none),
+    fileSize(0),
+    dataLoaded(false),
+    ownerId(0),
+    groupId(0),
+    isHardLink(false),
+    hardLinkCount(1) {}
 
 File::File(const fs::path& path) {
     initialize(path);
@@ -18,55 +31,119 @@ File::File(const fs::path& path) {
 void File::initialize(const fs::path& path) {
     this->filePath = path;
     this->fileName = path.filename().string();
+    this->dataLoaded = false;
+    
     try {
         // 使用symlink_status获取文件状态，不解析符号链接
-        fs::file_status status = fs::symlink_status(path);
+        std::error_code ec;
+        fs::file_status status = fs::symlink_status(path, ec);
+        if (ec) {
+            this->fileType = fs::file_type::none;
+            return;
+        }
         this->fileType = status.type();
         
+        // 获取硬链接数量和权限信息
+        #ifdef _WIN32
+            // Windows平台实现
+            this->hardLinkCount = 1;
+            this->permissions = 0644; // 默认权限
+            this->ownerId = 0;
+            this->groupId = 0;
+            this->isHardLink = false;
+        #else
+            struct stat st;
+            if (stat(path.string().c_str(), &st) == 0) {
+                this->hardLinkCount = st.st_nlink;
+                this->isHardLink = (this->hardLinkCount > 1);
+                this->permissions = st.st_mode & 07777; // 获取权限
+                this->ownerId = st.st_uid;
+                this->groupId = st.st_gid;
+            }
+        #endif
+        
+        // 获取文件大小
         if (fs::is_regular_file(status)) {
-            // 获取文件大小，添加错误处理
-            std::error_code ec;
             this->fileSize = fs::file_size(path, ec);
             if (ec) {
                 this->fileSize = 0;
             }
-            
-            // 使用C++17标准的文件时间获取方式，添加错误处理
-            std::error_code timeEc;
-            auto fileTime = fs::last_write_time(path, timeEc);
-            if (!timeEc) {
-                // 将文件时间转换为系统时钟时间点
-                // 使用正确的转换方法：将file_time_type转换为system_clock::time_point
-                auto fileClockNow = fs::file_time_type::clock::now();
-                auto sysClockNow = std::chrono::system_clock::now();
-                auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                    fileTime - fileClockNow + sysClockNow);
-                this->lastModifiedTime = tp;
-            }
-        } else if (fs::is_directory(status)) {
+        } else {
             this->fileSize = 0;
-            
-            // 对于目录，获取其修改时间，添加错误处理
-            std::error_code timeEc;
-            auto fileTime = fs::last_write_time(path, timeEc);
-            if (!timeEc) {
-                auto fileClockNow = fs::file_time_type::clock::now();
-                auto sysClockNow = std::chrono::system_clock::now();
-                auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                    fileTime - fileClockNow + sysClockNow);
-                this->lastModifiedTime = tp;
-            }
-        } else if (fs::is_symlink(status)) {
-            // 对于符号链接，获取其大小为0
-            this->fileSize = 0;
-            
-            // 对于符号链接，只获取链接本身的属性，不解析链接
-            // 注意：某些文件系统可能不支持获取符号链接的修改时间
-            // 所以如果获取失败，我们忽略并使用默认值
-            std::error_code timeEc;
-            // 这里不使用fs::last_write_time，因为它会解析符号链接
-            // 我们直接跳过获取符号链接的修改时间，避免循环链接问题
         }
+        
+        // 获取符号链接目标
+        if (fs::is_symlink(status)) {
+            this->symlinkTarget = fs::read_symlink(path, ec);
+        } else {
+            this->symlinkTarget.clear();
+        }
+        
+        // 获取文件时间，使用symlink_status避免解析符号链接
+        auto now = std::chrono::system_clock::now();
+        this->creationTime = now;
+        this->lastModifiedTime = now;
+        this->lastAccessTime = now;
+        
+        std::error_code timeEc;
+        // 最后修改时间
+        auto fileTime = fs::last_write_time(path, timeEc);
+        if (!timeEc) {
+            // 将文件时间转换为系统时钟时间点
+            auto fileClockNow = fs::file_time_type::clock::now();
+            auto sysClockNow = std::chrono::system_clock::now();
+            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                fileTime - fileClockNow + sysClockNow);
+            this->lastModifiedTime = tp;
+        }
+        
+        // 尝试获取创建时间和访问时间（平台特定）
+        #ifdef _WIN32
+            // Windows平台获取文件时间
+            WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+            if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
+                // 创建时间
+                FILETIME ftCreate, ftAccess, ftWrite;
+                SYSTEMTIME st;
+                
+                // 将FILETIME转换为SYSTEMTIME以获取创建时间
+                if (FileTimeToSystemTime(&fileInfo.ftCreationTime, &st)) {
+                    // 简单的时间转换，可能不够精确，但能满足基本需求
+                    struct tm tm;
+                    tm.tm_year = st.wYear - 1900;
+                    tm.tm_mon = st.wMonth - 1;
+                    tm.tm_mday = st.wDay;
+                    tm.tm_hour = st.wHour;
+                    tm.tm_min = st.wMinute;
+                    tm.tm_sec = st.wSecond;
+                    tm.tm_isdst = 0;
+                    time_t createTime = mktime(&tm);
+                    this->creationTime = std::chrono::system_clock::from_time_t(createTime);
+                }
+                
+                // 访问时间
+                if (FileTimeToSystemTime(&fileInfo.ftLastAccessTime, &st)) {
+                    struct tm tm;
+                    tm.tm_year = st.wYear - 1900;
+                    tm.tm_mon = st.wMonth - 1;
+                    tm.tm_mday = st.wDay;
+                    tm.tm_hour = st.wHour;
+                    tm.tm_min = st.wMinute;
+                    tm.tm_sec = st.wSecond;
+                    tm.tm_isdst = 0;
+                    time_t accessTime = mktime(&tm);
+                    this->lastAccessTime = std::chrono::system_clock::from_time_t(accessTime);
+                }
+            }
+        #else
+            // Linux/Unix平台获取文件时间
+            struct stat st;
+            if (stat(path.string().c_str(), &st) == 0) {
+                this->creationTime = std::chrono::system_clock::from_time_t(st.st_ctime);
+                this->lastAccessTime = std::chrono::system_clock::from_time_t(st.st_atime);
+            }
+        #endif
+        
     } catch (const std::exception& e) {
         std::cerr << "Error initializing file: " << e.what() << std::endl; 
     }
@@ -88,10 +165,107 @@ fs::file_type File::getFileType() const {
     return this->fileType;
 }
 
+std::chrono::system_clock::time_point File::getCreationTime() const {
+    return this->creationTime;
+}
+
 std::chrono::system_clock::time_point File::getLastModifiedTime() const {
     return this->lastModifiedTime;
 }
 
+std::chrono::system_clock::time_point File::getLastAccessTime() const {
+    return this->lastAccessTime;
+}
+
+unsigned int File::getPermissions() const {
+    return this->permissions;
+}
+
+unsigned int File::getOwnerId() const {
+    return this->ownerId;
+}
+
+unsigned int File::getGroupId() const {
+    return this->groupId;
+}
+
+const fs::path& File::getSymlinkTarget() const {
+    return this->symlinkTarget;
+}
+
+bool File::getIsHardLink() const {
+    return this->isHardLink;
+}
+
+unsigned int File::getHardLinkCount() const {
+    return this->hardLinkCount;
+}
+
+const std::vector<char>& File::getFileData() const {
+    return this->fileData;
+}
+
+void File::setFileData(const std::vector<char>& data) {
+    this->fileData = data;
+    this->dataLoaded = true;
+    this->fileSize = data.size();
+}
+
+bool File::loadFileData() {
+    if (this->isSymbolicLink() || this->isDirectory() || !this->isRegularFile()) {
+        return false; // 只加载常规文件的数据
+    }
+    
+    try {
+        std::ifstream file(this->filePath, std::ios::binary);
+        if (!file.is_open()) {
+            return false;
+        }
+        
+        // 获取文件大小
+        file.seekg(0, std::ios::end);
+        size_t size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        
+        // 分配内存并读取数据
+        this->fileData.resize(size);
+        file.read(this->fileData.data(), size);
+        
+        if (!file) {
+            return false;
+        }
+        
+        this->dataLoaded = true;
+        this->fileSize = size;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading file data: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool File::saveFileData() {
+    if (this->isSymbolicLink() || this->isDirectory() || !this->isRegularFile()) {
+        return false; // 只保存常规文件的数据
+    }
+    
+    try {
+        std::ofstream file(this->filePath, std::ios::binary);
+        if (!file.is_open()) {
+            return false;
+        }
+        
+        file.write(this->fileData.data(), this->fileData.size());
+        if (!file) {
+            return false;
+        }
+        
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error saving file data: " << e.what() << std::endl;
+        return false;
+    }
+}
 
 bool File::exists() const {
     return fs::exists(this->filePath);
