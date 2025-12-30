@@ -4,6 +4,7 @@
 #include <iostream>  // 仅用于调试（可选），正式版可移除
 #include <stdexcept>
 #include <string.h>
+#include <functional>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -64,12 +65,9 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     std::error_code ec;
     
     // 检查源文件和目标文件是否相同，避免循环复制
-    std::error_code canonicalEc;
-    fs::path sourceCanonical = fs::canonical(sourcePath.parent_path(), canonicalEc);
-    fs::path destCanonical = fs::canonical(destPath.parent_path(), canonicalEc);
-    
-    // 如果源文件和目标文件路径相同，直接返回成功（或跳过）
-    if (sourceCanonical / sourcePath.filename() == destCanonical / destPath.filename()) {
+    // 对于符号链接，我们不使用canonical，因为它会解析链接
+    // 直接比较路径字符串，避免符号链接解析问题
+    if (sourcePath.string() == destPath.string()) {
         return true;
     }
     
@@ -175,16 +173,41 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
     }
 
     try {
-        // 使用directory_options::skip_permission_denied跳过权限不足的目录
-        // 不递归进入符号链接指向的目录（默认行为）
+        // 首先收集所有文件和非空目录
         for (const auto& entry : fs::recursive_directory_iterator(
                  directory, 
                  fs::directory_options::skip_permission_denied, 
                  ec)) {
             if (ec) break;
-            // 收集所有类型的文件，包括目录、符号链接、设备文件等
             files.emplace_back(entry.path());
         }
+        
+        // 然后使用directory_iterator遍历所有目录，确保收集到所有空目录
+        // 注意：使用non-recursive模式遍历每个目录层级
+        std::function<void(const fs::path&)> collectEmptyDirs = [&](const fs::path& dirPath) {
+            for (const auto& entry : fs::directory_iterator(dirPath, ec)) {
+                if (ec) break;
+                if (fs::is_directory(entry.status())) {
+                    // 检查目录是否已经在files列表中
+                    bool exists = false;
+                    for (const auto& file : files) {
+                        if (file.getFilePath() == entry.path()) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    // 如果目录不在files列表中，添加它
+                    if (!exists) {
+                        files.emplace_back(entry.path());
+                    }
+                    // 递归检查子目录
+                    collectEmptyDirs(entry.path());
+                }
+            }
+        };
+        
+        // 开始收集空目录
+        collectEmptyDirs(directory);
     } catch (const fs::filesystem_error&) {
         // 忽略异常，返回已收集的文件（或空）
     }
@@ -225,10 +248,11 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
     uint64_t originalSize = getFileSize(source);
     uint64_t compressedSize = getFileSize(destination);
     
-    // 如果压缩后的文件没有变小，删除压缩文件，直接复制原始文件
+    // 如果压缩后的文件没有变小，删除压缩文件并返回false
+    // 让调用者决定如何处理，避免将原始文件复制到.huff文件中
     if (compressedSize >= originalSize) {
         std::filesystem::remove(destination);
-        return copyFile(source, destination);
+        return false;
     }
     
     return true;
@@ -240,8 +264,24 @@ bool FileSystem::decompressFile(const std::string& source, const std::string& de
 }
 
 bool FileSystem::copyAndCompressFile(const std::string& source, const std::string& destination) {
-    // 使用HuffmanCompressor压缩文件
-    return compressFile(source, destination);
+    // 先尝试压缩文件
+    if (compressFile(source, destination)) {
+        return true;
+    }
+    
+    // 如果压缩失败，直接复制原始文件，不添加.huff扩展名
+    // 但首先确保目标文件不存在，避免生成无效文件
+    std::error_code ec;
+    fs::remove(destination, ec);
+    
+    // 去掉.huff扩展名，获取原始文件名
+    std::string originalDest = destination;
+    if (originalDest.size() > 5 && originalDest.substr(originalDest.size() - 5) == ".huff") {
+        originalDest = originalDest.substr(0, originalDest.size() - 5);
+    }
+    
+    // 直接复制原始文件到原始文件名
+    return copyFile(source, originalDest);
 }
 
 bool FileSystem::decompressAndCopyFile(const std::string& source, const std::string& destination) {
