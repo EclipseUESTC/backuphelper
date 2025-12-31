@@ -39,9 +39,9 @@ HuffmanNode* HuffmanCompressor::buildHuffmanTree(const std::unordered_map<char, 
         HuffmanNode* right = minHeap.top();
         minHeap.pop();
 
-        // 创建一个新节点，频率为两个节点的频率之和
-        // 使用特殊字符'$'作为内部节点的标记
-        HuffmanNode* newNode = new HuffmanNode('$', left->freq + right->freq);
+        // 创建一个内部节点，数据域为0，频率为左右节点频率之和
+        // 使用0作为内部节点的标记
+        HuffmanNode* newNode = new HuffmanNode(0, left->freq + right->freq);
         newNode->left = left;
         newNode->right = right;
 
@@ -119,26 +119,8 @@ void HuffmanCompressor::generateCodes(HuffmanNode* root, const std::string& code
     generateCodes(root->right, code + "1", huffmanCodes);
 }
 
-std::string HuffmanCompressor::decodeText(HuffmanNode* root, const std::string& encodedData) {
-    std::string decodedText;
-    HuffmanNode* current = root;
-
-    for (char bit : encodedData) {
-        if (bit == '0') {
-            current = current->left;
-        } else {
-            current = current->right;
-        }
-
-        // 如果到达叶子节点
-        if (current->left == nullptr && current->right == nullptr) {
-            decodedText += current->data;
-            current = root; // 回到根节点继续解码
-        }
-    }
-
-    return decodedText;
-}
+// 移除旧的decodeText方法，因为现在我们直接在decompressFile中实现解码
+// 这样可以避免string和unsigned char之间的转换问题
 
 std::vector<unsigned char> HuffmanCompressor::bitStringToBytes(const std::string& bitString) {
     std::vector<unsigned char> bytes;
@@ -268,7 +250,8 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         for (unsigned char ch : inputData) {
             const std::string& code = huffmanCodes[ch];
             for (char bit : code) {
-                // 将位写入当前字节
+                // 将位写入当前字节，注意：Huffman编码的位串是从高位到低位排列的
+                // 所以第一个位应该作为最高位，而不是最低位
                 currentByte = (currentByte << 1) | (bit - '0');
                 bitCount++;
                 
@@ -283,7 +266,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         
         // 处理剩余的位
         if (bitCount > 0) {
-            // 填充剩余位为0
+            // 填充剩余位为0，注意：剩余位应该填充在右侧（低位）
             currentByte <<= (8 - bitCount);
             bytes.push_back(currentByte);
         }

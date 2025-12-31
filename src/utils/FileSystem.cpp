@@ -97,26 +97,9 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (symlinkTarget.is_absolute()) {
             relativeTarget = symlinkTarget;
         } else {
-            // 检查目标文件是否存在，如果存在且是普通文件，检查是否有对应的压缩文件
-            fs::path sourceDir = sourcePath.parent_path();
-            fs::path absoluteTarget = sourceDir / symlinkTarget;
-            
-            // 检查目标文件是否是普通文件
-            if (fs::is_regular_file(absoluteTarget)) {
-                // 检查是否存在对应的.huff压缩文件
-                fs::path compressedTarget = absoluteTarget.string() + ".huff";
-                if (fs::exists(compressedTarget)) {
-                    // 如果存在压缩文件，调整符号链接目标为压缩文件
-                    // 但保持相对路径格式
-                    relativeTarget = symlinkTarget.string() + ".huff";
-                } else {
-                    // 否则使用原始目标
-                    relativeTarget = symlinkTarget;
-                }
-            } else {
-                // 非普通文件或目标文件不存在，使用原始目标
-                relativeTarget = symlinkTarget;
-            }
+            // 对于符号链接，直接使用原始相对路径，不进行压缩检查
+            // 压缩检查应该在创建实际文件时处理，而不是在创建符号链接时
+            relativeTarget = symlinkTarget;
         }
         
         // 尝试创建符号链接

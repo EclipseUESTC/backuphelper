@@ -483,18 +483,10 @@ public:
         std::cout << "\n=== Compression Settings ===\n";
         std::cout << "Current status: " << (config.compressEnabled ? "Enabled" : "Disabled") << "\n";
         
-        std::string input;
-        std::cout << "Enable compression? (y/n, default: y): ";
-        std::cin.ignore();
-        std::getline(std::cin, input);
+        // 直接切换状态，无需询问
+        config.compressEnabled = !config.compressEnabled;
+        std::cout << "Compression status updated to: " << (config.compressEnabled ? "Enabled" : "Disabled") << "\n";
         
-        if (!input.empty()) {
-            char choice = std::tolower(input[0]);
-            config.compressEnabled = (choice == 'y' || choice == '1');
-            std::cout << "Compression status updated to: " << (config.compressEnabled ? "Enabled" : "Disabled") << "\n";
-        } else {
-            std::cout << "Keeping current status unchanged.\n";
-        }
         waitForEnter();
     }
 
@@ -503,29 +495,22 @@ public:
         std::cout << "\n=== File Packaging Settings ===\n";
         std::cout << "Current status: " << (config.packageEnabled ? "Enabled" : "Disabled") << "\n";
         
-        std::string input;
-        std::cout << "Enable file packaging? (y/n, default: n): ";
-        std::cin.ignore();
-        std::getline(std::cin, input);
+        // 直接切换状态，无需询问
+        config.packageEnabled = !config.packageEnabled;
+        std::cout << "File packaging status updated to: " << (config.packageEnabled ? "Enabled" : "Disabled") << "\n";
         
-        if (!input.empty()) {
-            char choice = std::tolower(input[0]);
-            config.packageEnabled = (choice == 'y' || choice == '1');
-            std::cout << "File packaging status updated to: " << (config.packageEnabled ? "Enabled" : "Disabled") << "\n";
-            
-            if (config.packageEnabled) {
-                std::cout << "Package file name (default: backup.pkg): ";
-                std::getline(std::cin, input);
-                if (!input.empty()) {
-                    config.packageFileName = input;
-                    std::cout << "Package file name updated to: " << config.packageFileName << "\n";
-                } else {
-                    std::cout << "Using default package file name: backup.pkg\n";
-                }
+        if (config.packageEnabled) {
+            // 如果启用了打包，可以选择是否修改包文件名
+            std::cout << "Package file name (current: " << config.packageFileName << ", press Enter to keep): ";
+            std::string input;
+            std::cin.ignore();
+            std::getline(std::cin, input);
+            if (!input.empty()) {
+                config.packageFileName = input;
+                std::cout << "Package file name updated to: " << config.packageFileName << "\n";
             }
-        } else {
-            std::cout << "Keeping current status unchanged.\n";
         }
+        
         waitForEnter();
     }
 
@@ -729,6 +714,9 @@ private:
         std::cout << "[9] Show Help\n";
         std::cout << "[10] Reset Environment\n";
         std::cout << "[11] Delete Source Files (Test)\n";
+        std::cout << "[12] Set Source to /home/huang-nan/backup_test\n";
+        std::cout << "[13] Set Source to /home/huang-nan/backup_source\n";
+        std::cout << "[14] Delete All Files in Backup Directory\n";
         std::cout << "[0] Exit Program\n";
     }
 
@@ -767,6 +755,34 @@ private:
                 break;
             case 11:
                 deleteSourceFiles();
+                break;
+            case 12:
+                {
+                    AppConfig& config = controller.getConfig();
+                    config.sourceDir = "/home/huang-nan/backup_test";
+                    std::cout << "Source directory set to: " << config.sourceDir << "\n";
+                    waitForEnter();
+                }
+                break;
+            case 13:
+                {
+                    AppConfig& config = controller.getConfig();
+                    config.sourceDir = "/home/huang-nan/backup_source";
+                    std::cout << "Source directory set to: " << config.sourceDir << "\n";
+                    waitForEnter();
+                }
+                break;
+            case 14:
+                {
+                    AppConfig& config = controller.getConfig();
+                    std::cout << "Deleting all files in backup directory: " << config.backupDir << "\n";
+                    if (FileSystem::clearDirectory(config.backupDir)) {
+                        std::cout << "All files in backup directory have been deleted successfully.\n";
+                    } else {
+                        std::cout << "Failed to delete files in backup directory.\n";
+                    }
+                    waitForEnter();
+                }
                 break;
             case 0:
                 std::cout << "Thank you for using Backup Helper, goodbye!\n";

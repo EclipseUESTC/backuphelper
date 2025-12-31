@@ -8,12 +8,12 @@
 
 // Huffman节点结构体
 struct HuffmanNode {
-    char data;              // 存储的字符
+    unsigned char data;     // 存储的字符，使用unsigned char支持所有字节值
     unsigned int freq;      // 字符出现频率
     HuffmanNode* left;      // 左子节点
     HuffmanNode* right;     // 右子节点
 
-    HuffmanNode(char data, unsigned int freq) : data(data), freq(freq), left(nullptr), right(nullptr) {}
+    HuffmanNode(unsigned char data, unsigned int freq) : data(data), freq(freq), left(nullptr), right(nullptr) {}
     ~HuffmanNode() {
         delete left;
         delete right;
