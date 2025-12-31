@@ -97,12 +97,30 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (symlinkTarget.is_absolute()) {
             relativeTarget = symlinkTarget;
         } else {
-            // 对于相对路径，直接使用原始相对路径，不尝试解析
-            // 这样可以避免循环链接问题，同时保持符号链接的相对特性
-            relativeTarget = symlinkTarget;
+            // 检查目标文件是否存在，如果存在且是普通文件，检查是否有对应的压缩文件
+            fs::path sourceDir = sourcePath.parent_path();
+            fs::path absoluteTarget = sourceDir / symlinkTarget;
+            
+            // 检查目标文件是否是普通文件
+            if (fs::is_regular_file(absoluteTarget)) {
+                // 检查是否存在对应的.huff压缩文件
+                fs::path compressedTarget = absoluteTarget.string() + ".huff";
+                if (fs::exists(compressedTarget)) {
+                    // 如果存在压缩文件，调整符号链接目标为压缩文件
+                    // 但保持相对路径格式
+                    relativeTarget = symlinkTarget.string() + ".huff";
+                } else {
+                    // 否则使用原始目标
+                    relativeTarget = symlinkTarget;
+                }
+            } else {
+                // 非普通文件或目标文件不存在，使用原始目标
+                relativeTarget = symlinkTarget;
+            }
         }
         
         // 尝试创建符号链接
+        bool symlinkCreated = false;
         fs::create_symlink(relativeTarget, destPath, ec);
         if (ec) {
             // 如果创建失败，检查是否是因为目标文件已经存在
@@ -119,19 +137,24 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
                          << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
+        } else {
+            symlinkCreated = true;
         }
         
-        // 复制符号链接的元数据（权限、时间戳等）
-        fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
-        if (ec) {
-            std::cerr << "Warning: Failed to copy symlink permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-        }
-        
-        // 复制符号链接的时间戳
-        std::error_code timeEc;
-        fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
-        if (timeEc) {
-            std::cerr << "Warning: Failed to copy symlink timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
+        // 只有在符号链接成功创建后，才复制元数据
+        if (symlinkCreated) {
+            // 复制符号链接的元数据（权限、时间戳等）
+            fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy symlink permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+            }
+            
+            // 复制符号链接的时间戳
+            std::error_code timeEc;
+            fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
+            if (timeEc) {
+                std::cerr << "Warning: Failed to copy symlink timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
+            }
         }
         
         return true;
