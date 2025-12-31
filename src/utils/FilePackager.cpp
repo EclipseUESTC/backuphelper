@@ -2,7 +2,10 @@
 #include "HuffmanCompressor.hpp"
 #include <filesystem>
 #include <iostream>
-
+#include <sys/types.h>  // 用于 mkfifo
+#include <sys/stat.h>   // 用于 mkfifo
+#include <cerrno>       // 用于 errno
+#include <cstring>      // 用于 strerror
 namespace fs = std::filesystem;
 
 // 实现FileMetadata从File对象的构造函数
