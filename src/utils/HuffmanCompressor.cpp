@@ -209,7 +209,8 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         inFile.seekg(0, std::ios::beg);
         
         // 对于小文件，直接复制，不进行压缩（减少元数据开销）
-        if (fileSize < 100) {
+        // 调整阈值，对于非常小的文件，压缩后的元数据可能比原文件更大
+        if (fileSize < 512) {
             inFile.close();
             std::ifstream src(inputFilePath, std::ios::binary);
             std::ofstream dst(outputFilePath, std::ios::binary);
@@ -236,8 +237,9 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             freqMap[ch]++;
         }
         
-        // 如果字符种类过多，可能不适合Huffman压缩
-        if (freqMap.size() > 200) {
+        // 如果字符种类过多，Huffman压缩效果会很差
+        // 调整阈值，对于字符种类超过128的文件，直接复制
+        if (freqMap.size() > 128) {
             // 直接复制文件，不进行压缩
             std::ofstream outFile(outputFilePath, std::ios::binary);
             if (!outFile) {
@@ -256,17 +258,38 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         std::unordered_map<unsigned char, std::string> huffmanCodes;
         generateCodes(root, "", huffmanCodes);
         
-        // 5. 使用Huffman编码压缩数据
-        std::string encodedData;
+        // 5. 直接构建压缩后的字节数据，避免使用大型位串作为中间表示
+        std::vector<unsigned char> bytes;
+        unsigned char currentByte = 0;
+        int bitCount = 0;
+        
+        // 遍历输入数据，直接生成压缩字节
         for (unsigned char ch : inputData) {
-            encodedData += huffmanCodes[ch];
+            const std::string& code = huffmanCodes[ch];
+            for (char bit : code) {
+                // 将位写入当前字节
+                currentByte = (currentByte << 1) | (bit - '0');
+                bitCount++;
+                
+                // 当当前字节已满时，添加到结果中
+                if (bitCount == 8) {
+                    bytes.push_back(currentByte);
+                    currentByte = 0;
+                    bitCount = 0;
+                }
+            }
         }
         
-        // 6. 将编码后的数据转换为字节序列
-        std::vector<unsigned char> bytes = bitStringToBytes(encodedData);
+        // 处理剩余的位
+        if (bitCount > 0) {
+            // 填充剩余位为0
+            currentByte <<= (8 - bitCount);
+            bytes.push_back(currentByte);
+        }
         
         // 计算压缩后总大小（包括元数据）
-        size_t metadataSize = 1 + (freqMap.size() * 5) + sizeof(unsigned int); // 填充位(1) + 频率表(每个字符5字节) + 原始大小(4字节)
+        // 实际元数据大小：填充位(1字节) + 字符种类数(1字节) + 频率表(每个字符5字节) + 原始大小(4字节)
+        size_t metadataSize = 1 + 1 + (freqMap.size() * 5) + 4;
         size_t totalCompressedSize = metadataSize + bytes.size();
         
         // 如果压缩后的文件没有变小，直接复制原始文件
@@ -295,7 +318,8 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         }
         
         // 写入填充位数
-        int padding = (8 - (encodedData.size() % 8)) % 8;
+        // 计算填充的位数，即最后一个字节中未使用的位的数量
+        int padding = (bitCount > 0) ? (8 - bitCount) % 8 : 0;
         outFile.put(static_cast<char>(padding));
         
         // 优化：使用更紧凑的方式存储频率表，而不是完整的Huffman树

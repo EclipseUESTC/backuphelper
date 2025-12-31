@@ -91,8 +91,23 @@ bool BackupTask::execute() {
         std::string finalBackupFile;
         if (compressEnabled && file.isRegularFile()) {
             // 仅对普通文件进行压缩，添加.huff扩展名
-            finalBackupFile = backupFile + ".huff";
-            success = FileSystem::copyAndCompressFile(file.getFilePath().string(), finalBackupFile);
+            std::string compressedBackupFile = backupFile + ".huff";
+            success = FileSystem::copyAndCompressFile(file.getFilePath().string(), compressedBackupFile);
+            
+            // 检查压缩是否真正创建了.huff文件
+            if (success) {
+                // 检查文件是否实际存在
+                if (std::filesystem::exists(compressedBackupFile)) {
+                    finalBackupFile = compressedBackupFile;
+                } else {
+                    // 压缩失败，文件已被替换为非压缩版本
+                    finalBackupFile = backupFile;
+                }
+            } else {
+                // 压缩失败，直接复制
+                finalBackupFile = backupFile;
+                success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
+            }
         } else {
             // 对非普通文件（目录、符号链接、设备文件等）直接复制，不压缩
             finalBackupFile = backupFile;
@@ -105,7 +120,7 @@ bool BackupTask::execute() {
             return false;
         }
         
-        // 将备份后的文件路径添加到列表中（暂不加密，等打包后一起加密）
+        // 将备份后的实际文件路径添加到列表中
         backedUpFiles.push_back(finalBackupFile);
         
         successCount++;

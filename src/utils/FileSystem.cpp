@@ -347,6 +347,28 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
         return false;
     }
     
+    // 复制原始文件的元数据到压缩文件
+    std::error_code ec;
+    
+    // 复制权限
+    fs::permissions(destination, fs::status(source).permissions(), ec);
+    if (ec) {
+        std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+    }
+    
+    // 复制时间戳
+    try {
+        auto fileTime = fs::last_write_time(source, ec);
+        if (!ec) {
+            fs::last_write_time(destination, fileTime, ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Warning: Failed to copy file metadata for " << destination << " (" << e.what() << ")" << std::endl;
+    }
+    
     // 压缩成功，打印压缩效率
     double compressionRatio = static_cast<double>(originalSize - compressedSize) / originalSize * 100;
     std::cout << "Info: File compressed successfully: " << source << std::endl;
@@ -359,7 +381,35 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
 
 bool FileSystem::decompressFile(const std::string& source, const std::string& destination) {
     HuffmanCompressor compressor;
-    return compressor.decompressFile(source, destination);
+    
+    // 先解压缩文件
+    if (!compressor.decompressFile(source, destination)) {
+        return false;
+    }
+    
+    // 复制压缩文件的元数据到解压缩文件
+    std::error_code ec;
+    
+    // 复制权限
+    fs::permissions(destination, fs::status(source).permissions(), ec);
+    if (ec) {
+        std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
+    }
+    
+    // 复制时间戳
+    try {
+        auto fileTime = fs::last_write_time(source, ec);
+        if (!ec) {
+            fs::last_write_time(destination, fileTime, ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Warning: Failed to copy file metadata for " << destination << " (" << e.what() << ")" << std::endl;
+    }
+    
+    return true;
 }
 
 bool FileSystem::copyAndCompressFile(const std::string& source, const std::string& destination) {
