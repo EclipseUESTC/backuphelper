@@ -228,7 +228,8 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
             if (!parentDir.empty()) {
                 fs::create_directories(parentDir, ec);
                 if (ec) {
-                    std::cerr << "Error: Cannot create directory: " << parentDir << " (" << ec.message() << ")" << std::endl;
+                    std::cerr << "Error: Cannot create directory: " << parentDir 
+                              << " (" << ec.message() << ")" << std::endl;
                     inFile.close();
                     return false;
                 }
@@ -251,10 +252,19 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                 char buffer[8192];
                 uint64_t bytesRead = 0;
                 while (bytesRead < fileMeta.fileSize) {
-                    uint64_t bytesToRead = std::min<uint64_t>(sizeof(buffer), fileMeta.fileSize - bytesRead);
+                    uint64_t bytesToRead = std::min<uint64_t>(sizeof(buffer), 
+                                                              fileMeta.fileSize - bytesRead);
                     inFile.read(buffer, bytesToRead);
                     outFile.write(buffer, inFile.gcount());
                     bytesRead += inFile.gcount();
+                    
+                    // 检查读取错误
+                    if (!inFile) {
+                        std::cerr << "Error: Failed to read file data for " << outputPath << std::endl;
+                        outFile.close();
+                        inFile.close();
+                        return false;
+                    }
                 }
 
                 outFile.close();
@@ -262,33 +272,86 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                 // 目录
                 fs::create_directories(outputFsPath, ec);
                 if (ec) {
-                    std::cerr << "Error: Cannot create directory: " << outputPath << " (" << ec.message() << ")" << std::endl;
+                    std::cerr << "Error: Cannot create directory: " << outputPath 
+                              << " (" << ec.message() << ")" << std::endl;
                     inFile.close();
                     return false;
                 }
             } else if (fileMeta.fileType == 2) {
                 // 符号链接
+                // 在创建符号链接前确保目标文件/目录不存在
+                if (fs::exists(outputFsPath, ec)) {
+                    fs::remove(outputFsPath, ec);
+                }
                 fs::create_symlink(fileMeta.symlinkTarget, outputFsPath, ec);
                 if (ec) {
-                    std::cerr << "Error: Cannot create symlink: " << outputPath << " -> " << fileMeta.symlinkTarget << " (" << ec.message() << ")" << std::endl;
+                    std::cerr << "Error: Cannot create symlink: " << outputPath 
+                              << " -> " << fileMeta.symlinkTarget 
+                              << " (" << ec.message() << ")" << std::endl;
                     inFile.close();
                     return false;
                 }
-            } 
-            // 其他文件类型（FIFO、设备文件、套接字）暂时不支持创建
-            
-            // 恢复文件权限
-            fs::permissions(outputFsPath, fs::perms(fileMeta.permissions), ec);
-            if (ec) {
-                std::cerr << "Warning: Cannot set permissions for " << outputPath << " (" << ec.message() << ")" << std::endl;
+            } else if (fileMeta.fileType == 3) {
+                // FIFO文件（命名管道）
+                #ifdef _WIN32
+                    // Windows不支持直接创建类似Unix的命名管道文件
+                    std::cerr << "Warning: FIFO files are not supported on Windows, skipping " 
+                              << outputPath << std::endl;
+                #else
+                    // 删除已存在的文件
+                    if (fs::exists(outputFsPath, ec)) {
+                        fs::remove(outputFsPath, ec);
+                    }
+                    // 创建FIFO文件
+                    if (mkfifo(outputPath.c_str(), 0666) != 0) {
+                        std::cerr << "Error: Failed to create FIFO " << outputPath 
+                                  << " (" << strerror(errno) << ")" << std::endl;
+                        // 继续执行，不中断整个解包过程
+                    }
+                #endif
+            } else {
+                std::cerr << "Warning: Unknown file type " << fileMeta.fileType 
+                          << " for file " << outputPath << ", skipping..." << std::endl;
+                continue;
             }
             
-            // 恢复文件时间戳
-            // 转换时间戳为文件时间类型
-            auto fileTime = fs::file_time_type(std::chrono::seconds(fileMeta.lastModifiedTime));
-            fs::last_write_time(outputFsPath, fileTime, ec);
-            if (ec) {
-                std::cerr << "Warning: Cannot set last modified time for " << outputPath << " (" << ec.message() << ")" << std::endl;
+            // 恢复文件权限（不适用于符号链接，因为符号链接没有独立的权限）
+            if (fileMeta.fileType != 2) {  // 不是符号链接
+                fs::permissions(outputFsPath, fs::perms(fileMeta.permissions), 
+                                fs::perm_options::replace, ec);
+                if (ec) {
+                    std::cerr << "Warning: Cannot set permissions for " << outputPath 
+                              << " (" << ec.message() << ")" << std::endl;
+                }
+            }
+            
+            // 恢复文件时间戳（不适用于符号链接？这取决于你的需求）
+            // 注意：对于符号链接，你可能需要设置符号链接本身的时间，或者目标文件的时间
+            // 这里我们为所有非特殊文件类型设置时间戳
+            if (fileMeta.fileType == 0 || fileMeta.fileType == 1) {
+                try {
+                    // 方法1：简单的duration转换（推荐，最稳定）
+                    auto sysTime = std::chrono::system_clock::from_time_t(fileMeta.lastModifiedTime);
+                    auto sysDuration = sysTime.time_since_epoch();
+                    
+                    // 将system_clock的duration转换为file_time_type的duration
+                    auto fileDuration = std::chrono::duration_cast<
+                        fs::file_time_type::duration>(sysDuration);
+                    
+                    // 创建file_time_type
+                    auto fileTime = fs::file_time_type(fileDuration);
+                    
+                    // 设置文件时间
+                    fs::last_write_time(outputFsPath, fileTime, ec);
+                    if (ec) {
+                        std::cerr << "Warning: Cannot set last modified time for " 
+                                  << outputPath << " (" << ec.message() << ")" << std::endl;
+                    }
+                    
+                } catch (const std::exception& e) {
+                    std::cerr << "Warning: Failed to set timestamp for " << outputPath 
+                              << " (" << e.what() << ")" << std::endl;
+                }
             }
         }
 
