@@ -89,12 +89,34 @@ void File::initialize(const fs::path& path) {
         // 最后修改时间
         auto fileTime = fs::last_write_time(path, timeEc);
         if (!timeEc) {
-            // 将文件时间转换为系统时钟时间点
-            auto fileClockNow = fs::file_time_type::clock::now();
-            auto sysClockNow = std::chrono::system_clock::now();
-            auto tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                fileTime - fileClockNow + sysClockNow);
-            this->lastModifiedTime = tp;
+            // 更可靠的时间转换方式：使用time_t作为中间层
+            #ifdef _WIN32
+                // Windows平台：使用Windows API获取文件时间
+                WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+                if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
+                    SYSTEMTIME st;
+                    tm tm_local;
+                    
+                    if (FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &st)) {
+                        tm_local.tm_year = st.wYear - 1900;
+                        tm_local.tm_mon = st.wMonth - 1;
+                        tm_local.tm_mday = st.wDay;
+                        tm_local.tm_hour = st.wHour;
+                        tm_local.tm_min = st.wMinute;
+                        tm_local.tm_sec = st.wSecond;
+                        tm_local.tm_isdst = 0;
+                        
+                        time_t modTime = mktime(&tm_local);
+                        this->lastModifiedTime = std::chrono::system_clock::from_time_t(modTime);
+                    }
+                }
+            #else
+                // Linux/Unix平台：使用stat获取时间
+                struct stat st;
+                if (stat(path.string().c_str(), &st) == 0) {
+                    this->lastModifiedTime = std::chrono::system_clock::from_time_t(st.st_mtime);
+                }
+            #endif
         }
         
         // 尝试获取创建时间和访问时间（平台特定）

@@ -6,6 +6,17 @@
 #include <sys/stat.h>   // 用于 mkfifo
 #include <cerrno>       // 用于 errno
 #include <cstring>      // 用于 strerror
+
+// Windows平台特定头文件
+#ifdef _WIN32
+    #define NOMINMAX  // 避免与C++标准库中的max宏冲突
+    #include <windows.h>
+    #include <time.h>  // 用于 localtime_s
+#else
+    #include <fcntl.h>  // 用于 utimensat
+    #include <time.h>   // 用于 struct timespec
+#endif
+
 namespace fs = std::filesystem;
 
 // 实现FileMetadata从File对象的构造函数
@@ -328,28 +339,53 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                 }
             }
             
-            // 恢复文件时间戳（不适用于符号链接？这取决于你的需求）
-            // 注意：对于符号链接，你可能需要设置符号链接本身的时间，或者目标文件的时间
-            // 这里我们为所有非特殊文件类型设置时间戳
-            if (fileMeta.fileType == 0 || fileMeta.fileType == 1) {
+            // 恢复文件时间戳
+            // 注意：使用平台特定的API来设置文件时间，避免时钟系统差异导致的问题
+            if (fileMeta.fileType == 0 || fileMeta.fileType == 1) {  // 普通文件和目录
                 try {
-                    // 方法1：简单的duration转换（推荐，最稳定）
-                    auto sysTime = std::chrono::system_clock::from_time_t(fileMeta.lastModifiedTime);
-                    auto sysDuration = sysTime.time_since_epoch();
+                    // 将Unix时间戳转换为time_t
+                    time_t timestamp = static_cast<time_t>(fileMeta.lastModifiedTime);
                     
-                    // 将system_clock的duration转换为file_time_type的duration
-                    auto fileDuration = std::chrono::duration_cast<
-                        fs::file_time_type::duration>(sysDuration);
-                    
-                    // 创建file_time_type
-                    auto fileTime = fs::file_time_type(fileDuration);
-                    
-                    // 设置文件时间
-                    fs::last_write_time(outputFsPath, fileTime, ec);
-                    if (ec) {
-                        std::cerr << "Warning: Cannot set last modified time for " 
-                                  << outputPath << " (" << ec.message() << ")" << std::endl;
-                    }
+                    #ifdef _WIN32
+                        // Windows平台实现：使用Windows API直接设置文件时间
+                        HANDLE hFile = CreateFileA(outputPath.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, 
+                                                 OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                        if (hFile != INVALID_HANDLE_VALUE) {
+                            SYSTEMTIME st;
+                            FILETIME ft;
+                            tm tm_local;
+                            
+                            // 使用localtime_s确保线程安全
+                            localtime_s(&tm_local, &timestamp);
+                            
+                            // 填充SYSTEMTIME结构体
+                            st.wYear = tm_local.tm_year + 1900;
+                            st.wMonth = tm_local.tm_mon + 1;
+                            st.wDay = tm_local.tm_mday;
+                            st.wHour = tm_local.tm_hour;
+                            st.wMinute = tm_local.tm_min;
+                            st.wSecond = tm_local.tm_sec;
+                            st.wMilliseconds = 0;
+                            
+                            // 转换为FILETIME并设置文件时间
+                            SystemTimeToFileTime(&st, &ft);
+                            SetFileTime(hFile, NULL, NULL, &ft);  // 只设置修改时间
+                            CloseHandle(hFile);
+                        }
+                    #else
+                        // Linux/Unix平台实现：使用utimensat函数直接设置文件时间
+                        struct timespec times[2];
+                        times[0].tv_sec = timestamp;  // 访问时间(atime)
+                        times[0].tv_nsec = 0;
+                        times[1].tv_sec = timestamp;  // 修改时间(mtime)
+                        times[1].tv_nsec = 0;
+                        
+                        // 使用utimensat函数设置文件时间，0表示使用当前工作目录
+                        if (utimensat(0, outputPath.c_str(), times, 0) != 0) {
+                            std::cerr << "Warning: Cannot set file times for " << outputPath 
+                                      << " (" << strerror(errno) << ")" << std::endl;
+                        }
+                    #endif
                     
                 } catch (const std::exception& e) {
                     std::cerr << "Warning: Failed to set timestamp for " << outputPath 
