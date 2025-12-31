@@ -29,8 +29,8 @@ struct AppConfig {
     std::vector<std::string> excludedPaths;
     std::vector<std::string> includedExtensions;
     bool useFilters = false;
-    bool compressEnabled = true;  // 压缩开关，默认为开启
-    bool packageEnabled = false;   // 拼接开关，默认为关闭
+    bool compressEnabled = false;  // 压缩开关，默认为开启
+    bool packageEnabled = true;   // 拼接开关，默认为关闭
     std::string packageFileName = "backup.pkg"; // 拼接后的文件名
     std::string password; // 加密/解密密码
 };
