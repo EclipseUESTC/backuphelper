@@ -210,7 +210,8 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         
         // 对于小文件，直接复制，不进行压缩（减少元数据开销）
         // 调整阈值，对于非常小的文件，压缩后的元数据可能比原文件更大
-        if (fileSize < 512) {
+        // 325字节的文件可以有效压缩，所以阈值设置为100字节
+        if (fileSize < 100) {
             inFile.close();
             std::ifstream src(inputFilePath, std::ios::binary);
             std::ofstream dst(outputFilePath, std::ios::binary);
