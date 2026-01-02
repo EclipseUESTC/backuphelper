@@ -112,6 +112,11 @@ bool RestoreTask::execute() {
                 // 尝试解密
                 logger->info("Decrypting file: " + backupFilePath);
                 
+                // 保存原始加密文件的元数据
+                std::error_code ec;
+                auto originalFileTime = std::filesystem::last_write_time(backupFilePath, ec);
+                auto originalPermissions = std::filesystem::status(backupFilePath, ec).permissions();
+                
                 // 创建临时解密文件
                 tempFile = backupFilePath + ".tmp";
                 needCleanup = true;
@@ -124,6 +129,19 @@ bool RestoreTask::execute() {
                         std::filesystem::remove(tempFile);
                     }
                     return false;
+                }
+                
+                // 将原始加密文件的元数据复制到临时解密文件
+                if (!ec) {
+                    std::filesystem::last_write_time(tempFile, originalFileTime, ec);
+                    if (ec) {
+                        logger->warn("Failed to copy file time to decrypted temp file: " + tempFile);
+                    }
+                    
+                    std::filesystem::permissions(tempFile, originalPermissions, ec);
+                    if (ec) {
+                        logger->warn("Failed to copy permissions to decrypted temp file: " + tempFile);
+                    }
                 }
                 
                 currentSource = tempFile;
@@ -214,16 +232,19 @@ bool RestoreTask::execute() {
                             return false;
                         }
                         
-                        // 处理符号链接目标，去掉.huff扩展名
-                        std::string symlinkTargetStr = originalSymlinkTarget.string();
-                        std::string finalSymlinkTarget;
-                        
-                        // 如果符号链接目标带有.huff扩展名，去掉它
-                        if (symlinkTargetStr.size() > 5 && symlinkTargetStr.substr(symlinkTargetStr.size() - 5) == ".huff") {
-                            finalSymlinkTarget = symlinkTargetStr.substr(0, symlinkTargetStr.size() - 5);
-                        } else {
-                            finalSymlinkTarget = symlinkTargetStr;
-                        }
+                        // 处理符号链接目标，去掉.enc和.huff扩展名
+                std::string symlinkTargetStr = originalSymlinkTarget.string();
+                std::string finalSymlinkTarget = symlinkTargetStr;
+                
+                // 如果符号链接目标带有.enc扩展名，去掉它
+                if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
+                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
+                }
+                
+                // 如果符号链接目标带有.huff扩展名，去掉它
+                if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
+                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
+                }
                         
                         // 现在创建符号链接，使用修改后的目标路径
                         std::filesystem::path symlinkDestPath(unpackedRestoreFile);
@@ -329,15 +350,18 @@ bool RestoreTask::execute() {
                     return false;
                 }
                 
-                // 处理符号链接目标，去掉.huff扩展名
+                // 处理符号链接目标，去掉.enc和.huff扩展名
                 std::string symlinkTargetStr = originalSymlinkTarget.string();
-                std::string finalSymlinkTarget;
+                std::string finalSymlinkTarget = symlinkTargetStr;
+                
+                // 如果符号链接目标带有.enc扩展名，去掉它
+                if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
+                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
+                }
                 
                 // 如果符号链接目标带有.huff扩展名，去掉它
-                if (symlinkTargetStr.size() > 5 && symlinkTargetStr.substr(symlinkTargetStr.size() - 5) == ".huff") {
-                    finalSymlinkTarget = symlinkTargetStr.substr(0, symlinkTargetStr.size() - 5);
-                } else {
-                    finalSymlinkTarget = symlinkTargetStr;
+                if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
+                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
                 }
                 
                 // 现在创建符号链接，使用修改后的目标路径

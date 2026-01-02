@@ -144,10 +144,18 @@ bool BackupTask::execute() {
                     // 检查目标文件是否是普通文件，如果是，并且启用了压缩，那么需要添加.huff扩展名
                     std::filesystem::path targetFilePath = sourcePath + "/" + relativeTarget;
                     if (std::filesystem::is_regular_file(targetFilePath, ec)) {
-                        // 目标是普通文件，需要检查是否需要添加.huff扩展名
-                        // 这里我们假设压缩会成功，所以添加.huff扩展名
-                        // 实际情况中，如果压缩失败，copyAndCompressFile会删除.huff文件并直接复制原文件
-                        finalSymlinkTarget = relativeTarget + ".huff";
+                        // 目标是普通文件，需要检查是否需要添加.huff扩展名和.enc扩展名
+                        finalSymlinkTarget = relativeTarget;
+                        
+                        // 如果启用了压缩，添加.huff扩展名
+                        if (compressEnabled) {
+                            finalSymlinkTarget += ".huff";
+                        }
+                        
+                        // 如果启用了加密，添加.enc扩展名
+                        if (!password.empty()) {
+                            finalSymlinkTarget += ".enc";
+                        }
                     } else {
                         // 目标不是普通文件，直接使用相对路径
                         finalSymlinkTarget = relativeTarget;
@@ -161,8 +169,18 @@ bool BackupTask::execute() {
                 std::filesystem::path symlinkParent = file.getFilePath().parent_path();
                 std::filesystem::path targetFilePath = symlinkParent / originalSymlinkTarget;
                 if (std::filesystem::is_regular_file(targetFilePath, ec)) {
-                    // 目标是普通文件，需要添加.huff扩展名
-                    finalSymlinkTarget = originalSymlinkTarget.string() + ".huff";
+                    // 目标是普通文件，需要添加.huff扩展名和.enc扩展名
+                    finalSymlinkTarget = originalSymlinkTarget.string();
+                    
+                    // 如果启用了压缩，添加.huff扩展名
+                    if (compressEnabled) {
+                        finalSymlinkTarget += ".huff";
+                    }
+                    
+                    // 如果启用了加密，添加.enc扩展名
+                    if (!password.empty()) {
+                        finalSymlinkTarget += ".enc";
+                    }
                 } else {
                     // 目标不是普通文件，直接使用相对路径
                     finalSymlinkTarget = originalSymlinkTarget.string();
@@ -262,6 +280,25 @@ bool BackupTask::execute() {
                     logger->error("Encryption failed: " + backupFile);
                     status = TaskStatus::FAILED;
                     return false;
+                }
+                
+                // 复制加密前文件的元数据到加密后的文件
+                std::error_code ec;
+                auto fileTime = std::filesystem::last_write_time(backupFile, ec);
+                if (!ec) {
+                    std::filesystem::last_write_time(encryptedFile, fileTime, ec);
+                    if (ec) {
+                        logger->warn("Failed to copy file time to encrypted file: " + encryptedFile);
+                    }
+                }
+                
+                // 复制权限
+                auto permissions = std::filesystem::status(backupFile, ec).permissions();
+                if (!ec) {
+                    std::filesystem::permissions(encryptedFile, permissions, ec);
+                    if (ec) {
+                        logger->warn("Failed to copy permissions to encrypted file: " + encryptedFile);
+                    }
                 }
                 
                 // 删除未加密的备份文件
