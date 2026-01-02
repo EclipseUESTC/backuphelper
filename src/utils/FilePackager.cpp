@@ -344,7 +344,14 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
             if (fileMeta.fileType == 0 || fileMeta.fileType == 1) {  // 普通文件和目录
                 try {
                     // 将Unix时间戳转换为time_t
-                    time_t timestamp = static_cast<time_t>(fileMeta.lastModifiedTime);
+                    uint64_t unixTime = fileMeta.lastModifiedTime;
+                    time_t timestamp = static_cast<time_t>(unixTime);
+                    
+                    // 确保时间戳有效（避免1901年问题）
+                    if (unixTime == 0) {
+                        // 如果时间戳为0（1970-01-01），使用当前时间作为默认值
+                        timestamp = time(nullptr);
+                    }
                     
                     #ifdef _WIN32
                         // Windows平台实现：使用Windows API直接设置文件时间
@@ -355,21 +362,24 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                             FILETIME ft;
                             tm tm_local;
                             
-                            // 使用localtime_s确保线程安全
-                            localtime_s(&tm_local, &timestamp);
-                            
-                            // 填充SYSTEMTIME结构体
-                            st.wYear = tm_local.tm_year + 1900;
-                            st.wMonth = tm_local.tm_mon + 1;
-                            st.wDay = tm_local.tm_mday;
-                            st.wHour = tm_local.tm_hour;
-                            st.wMinute = tm_local.tm_min;
-                            st.wSecond = tm_local.tm_sec;
-                            st.wMilliseconds = 0;
-                            
-                            // 转换为FILETIME并设置文件时间
-                            SystemTimeToFileTime(&st, &ft);
-                            SetFileTime(hFile, NULL, NULL, &ft);  // 只设置修改时间
+                            // 使用localtime_s确保线程安全，并检查返回值
+                            errno_t err = localtime_s(&tm_local, &timestamp);
+                            if (err == 0) {
+                                // 填充SYSTEMTIME结构体
+                                st.wYear = tm_local.tm_year + 1900;
+                                st.wMonth = tm_local.tm_mon + 1;
+                                st.wDay = tm_local.tm_mday;
+                                st.wHour = tm_local.tm_hour;
+                                st.wMinute = tm_local.tm_min;
+                                st.wSecond = tm_local.tm_sec;
+                                st.wMilliseconds = 0;
+                                
+                                // 转换为FILETIME并设置文件时间
+                                if (SystemTimeToFileTime(&st, &ft)) {
+                                    // 设置所有时间：创建时间、访问时间和修改时间
+                                    SetFileTime(hFile, &ft, &ft, &ft);
+                                }
+                            }
                             CloseHandle(hFile);
                         }
                     #else
