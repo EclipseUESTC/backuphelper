@@ -74,55 +74,57 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     }
     
     // 关键：先检查是否是符号链接
-    if (fs::is_symlink(sourcePath)) {
-        // 读取符号链接目标
-        fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
-        if (ec) {
-            std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
-            return false;
-        }
-        
-        // 无论目标文件是否存在，都尝试创建符号链接
-        // 但首先检查目标文件是否是符号链接，如果是则替换
-        if (fs::exists(destPath, ec) && fs::is_symlink(destPath, ec)) {
-            fs::remove(destPath, ec);
+        if (fs::is_symlink(sourcePath)) {
+            // 读取符号链接目标
+            fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
-        }
-        
-        // 创建符号链接，正确计算相对路径
-        fs::path relativeTarget;
-        if (symlinkTarget.is_absolute()) {
-            relativeTarget = symlinkTarget;
-        } else {
-            // 对于符号链接，直接使用原始相对路径，不进行压缩检查
-            // 压缩检查应该在创建实际文件时处理，而不是在创建符号链接时
-            relativeTarget = symlinkTarget;
-        }
-        
-        // 尝试创建符号链接
-        bool symlinkCreated = false;
-        fs::create_symlink(relativeTarget, destPath, ec);
-        if (ec) {
-            // 如果创建失败，检查是否是因为目标文件已经存在
-            if (ec.value() == static_cast<int>(std::errc::file_exists)) {
-                // 目标文件已经存在，并且不是符号链接
-                // 打印信息，说明跳过了符号链接创建
-                std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
-                std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
-                // 继续执行，不中断备份操作
-                return true;
+            
+            // 无论目标文件是否存在，都尝试创建符号链接
+            // 但首先检查目标文件是否是符号链接，如果是则替换
+            if (fs::exists(destPath, ec) && fs::is_symlink(destPath, ec)) {
+                fs::remove(destPath, ec);
+                if (ec) {
+                    std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
+                    return false;
+                }
+            }
+            
+            // 创建符号链接，正确计算相对路径
+            fs::path relativeTarget;
+            if (symlinkTarget.is_absolute()) {
+                relativeTarget = symlinkTarget;
             } else {
-                // 其他错误，打印详细信息并返回失败
-                std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
-                         << " (" << ec.message() << ")" << std::endl;
-                return false;
+                // 对于符号链接，检查目标是否是普通文件，并且是否需要添加.huff扩展名
+                // 注意：这里我们不进行实际的压缩检查，而是通过目标路径来判断
+                // 因为当前函数是通用的，不知道是否启用了压缩
+                // 实际的压缩逻辑在调用者中处理
+                relativeTarget = symlinkTarget;
             }
-        } else {
-            symlinkCreated = true;
-        }
+            
+            // 尝试创建符号链接
+            bool symlinkCreated = false;
+            fs::create_symlink(relativeTarget, destPath, ec);
+            if (ec) {
+                // 如果创建失败，检查是否是因为目标文件已经存在
+                if (ec.value() == static_cast<int>(std::errc::file_exists)) {
+                    // 目标文件已经存在，并且不是符号链接
+                    // 打印信息，说明跳过了符号链接创建
+                    std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
+                    std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
+                    // 继续执行，不中断备份操作
+                    return true;
+                } else {
+                    // 其他错误，打印详细信息并返回失败
+                    std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
+                             << " (" << ec.message() << ")" << std::endl;
+                    return false;
+                }
+            } else {
+                symlinkCreated = true;
+            }
         
         // 只有在符号链接成功创建后，才复制元数据
         if (symlinkCreated) {

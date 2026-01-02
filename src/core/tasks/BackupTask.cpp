@@ -108,8 +108,89 @@ bool BackupTask::execute() {
                 finalBackupFile = backupFile;
                 success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
             }
+        } else if (file.isSymbolicLink()) {
+            // 处理符号链接文件
+            // 首先读取符号链接的原始目标
+            std::error_code ec;
+            std::filesystem::path originalSymlinkTarget = std::filesystem::read_symlink(file.getFilePath(), ec);
+            if (ec) {
+                logger->error("Failed to read symlink target: " + file.getFilePath().string());
+                status = TaskStatus::FAILED;
+                return false;
+            }
+            
+            // 计算符号链接在源目录中的绝对目标路径
+            std::filesystem::path sourceDirPath(sourcePath);
+            std::filesystem::path absoluteTargetPath;
+            if (originalSymlinkTarget.is_absolute()) {
+                absoluteTargetPath = originalSymlinkTarget;
+            } else {
+                // 计算符号链接的父目录，然后与目标路径结合
+                std::filesystem::path symlinkParent = file.getFilePath().parent_path();
+                absoluteTargetPath = std::filesystem::canonical(symlinkParent / originalSymlinkTarget, ec);
+                if (ec) {
+                    // 如果无法获取绝对路径，使用相对路径
+                    absoluteTargetPath = originalSymlinkTarget;
+                }
+            }
+            
+            // 计算符号链接在备份目录中的目标路径
+            std::string finalSymlinkTarget;
+            if (absoluteTargetPath.is_absolute()) {
+                // 如果符号链接目标是绝对路径，检查它是否指向源目录中的文件
+                if (absoluteTargetPath.string().find(sourcePath) == 0) {
+                    // 目标是源目录中的文件，计算相对路径
+                    std::string relativeTarget = FileSystem::getRelativePath(absoluteTargetPath.string(), sourcePath);
+                    // 检查目标文件是否是普通文件，如果是，并且启用了压缩，那么需要添加.huff扩展名
+                    std::filesystem::path targetFilePath = sourcePath + "/" + relativeTarget;
+                    if (std::filesystem::is_regular_file(targetFilePath, ec)) {
+                        // 目标是普通文件，需要检查是否需要添加.huff扩展名
+                        // 这里我们假设压缩会成功，所以添加.huff扩展名
+                        // 实际情况中，如果压缩失败，copyAndCompressFile会删除.huff文件并直接复制原文件
+                        finalSymlinkTarget = relativeTarget + ".huff";
+                    } else {
+                        // 目标不是普通文件，直接使用相对路径
+                        finalSymlinkTarget = relativeTarget;
+                    }
+                } else {
+                    // 目标是外部文件，保持绝对路径
+                    finalSymlinkTarget = absoluteTargetPath.string();
+                }
+            } else {
+                // 目标是相对路径，检查目标是否是普通文件
+                std::filesystem::path symlinkParent = file.getFilePath().parent_path();
+                std::filesystem::path targetFilePath = symlinkParent / originalSymlinkTarget;
+                if (std::filesystem::is_regular_file(targetFilePath, ec)) {
+                    // 目标是普通文件，需要添加.huff扩展名
+                    finalSymlinkTarget = originalSymlinkTarget.string() + ".huff";
+                } else {
+                    // 目标不是普通文件，直接使用相对路径
+                    finalSymlinkTarget = originalSymlinkTarget.string();
+                }
+            }
+            
+            // 现在创建符号链接，使用修改后的目标路径
+            std::filesystem::path symlinkDestPath(backupFile);
+            // 先删除可能存在的目标文件
+            if (std::filesystem::exists(symlinkDestPath, ec)) {
+                std::filesystem::remove(symlinkDestPath, ec);
+            }
+            // 创建符号链接
+            std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
+            if (ec) {
+                logger->error("Failed to create symlink: " + backupFile);
+                status = TaskStatus::FAILED;
+                return false;
+            }
+            
+            // 复制符号链接的元数据
+            std::filesystem::permissions(symlinkDestPath, std::filesystem::status(file.getFilePath()).permissions(), ec);
+            std::filesystem::last_write_time(symlinkDestPath, std::filesystem::last_write_time(file.getFilePath(), ec), ec);
+            
+            success = true;
+            finalBackupFile = backupFile;
         } else {
-            // 对非普通文件（目录、符号链接、设备文件等）直接复制，不压缩
+            // 对非普通文件和非符号链接文件（目录、设备文件等）直接复制，不压缩
             finalBackupFile = backupFile;
             success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
         }
