@@ -404,9 +404,27 @@ bool FileSystem::decompressFile(const std::string& source, const std::string& de
     
     // 复制时间戳
     if (!ec) {
-        fs::last_write_time(destination, originalFileTime, ec);
+        // 确保时间戳有效，避免1901年问题
+        auto now = std::chrono::system_clock::now();
+        auto currentTime = fs::last_write_time(source, ec);
+        if (!ec && currentTime.time_since_epoch().count() > 0) {
+            fs::last_write_time(destination, currentTime, ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
+            }
+        } else {
+            // 如果时间戳无效，使用当前时间
+            fs::last_write_time(destination, now, ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to set current time for " << destination << " (" << ec.message() << ")" << std::endl;
+            }
+        }
+    } else {
+        // 如果获取原始时间失败，使用当前时间
+        auto now = std::chrono::system_clock::now();
+        fs::last_write_time(destination, now, ec);
         if (ec) {
-            std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
+            std::cerr << "Warning: Failed to set current time for " << destination << " (" << ec.message() << ")" << std::endl;
         }
     }
     

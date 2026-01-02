@@ -281,24 +281,29 @@ bool RestoreTask::execute() {
                                 finalDest = finalDest.substr(0, finalDest.size() - 5);
                             }
                             
-                            // 保存原始文件的元数据
+                            // 保存解包后压缩文件的元数据（这些是从打包文件中恢复的原始文件元数据）
                             std::error_code ec;
                             auto originalFileTime = std::filesystem::last_write_time(unpackedFilePath, ec);
                             auto originalPermissions = std::filesystem::status(unpackedFilePath, ec).permissions();
                             
-                            unpackedSuccess = FileSystem::decompressAndCopyFile(unpackedFilePath, finalDest);
-                            
-                            // 确保解压后的文件具有正确的元数据
-                            if (unpackedSuccess && !ec) {
-                                std::filesystem::last_write_time(finalDest, originalFileTime, ec);
-                                if (ec) {
-                                    logger->warn("Failed to copy file time to decompressed file: " + finalDest);
-                                }
+                            // 使用decompressFile而不是decompressAndCopyFile，确保元数据不被覆盖
+                            if (FileSystem::decompressFile(unpackedFilePath, finalDest)) {
+                                unpackedSuccess = true;
                                 
-                                std::filesystem::permissions(finalDest, originalPermissions, ec);
-                                if (ec) {
-                                    logger->warn("Failed to copy permissions to decompressed file: " + finalDest);
+                                // 确保解压后的文件具有正确的元数据（从打包文件中恢复的原始元数据）
+                                if (!ec) {
+                                    std::filesystem::last_write_time(finalDest, originalFileTime, ec);
+                                    if (ec) {
+                                        logger->warn("Failed to copy original file time to decompressed file: " + finalDest);
+                                    }
+                                    
+                                    std::filesystem::permissions(finalDest, originalPermissions, ec);
+                                    if (ec) {
+                                        logger->warn("Failed to copy original permissions to decompressed file: " + finalDest);
+                                    }
                                 }
+                            } else {
+                                unpackedSuccess = false;
                             }
                         } else {
                             // 普通复制
