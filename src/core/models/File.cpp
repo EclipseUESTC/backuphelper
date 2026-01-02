@@ -112,49 +112,31 @@ void File::initialize(const fs::path& path) {
         this->lastModifiedTime = now;
         this->lastAccessTime = now;
         
-        std::error_code timeEc;
-        // 最后修改时间
-        auto fileTime = fs::last_write_time(path, timeEc);
-        if (!timeEc) {
-            // 更可靠的时间转换方式：使用time_t作为中间层
-            #ifdef _WIN32
-                // Windows平台：使用Windows API获取文件时间
-                WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-                if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
-                    SYSTEMTIME st;
-                    tm tm_local;
-                    
-                    if (FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &st)) {
-                        tm_local.tm_year = st.wYear - 1900;
-                        tm_local.tm_mon = st.wMonth - 1;
-                        tm_local.tm_mday = st.wDay;
-                        tm_local.tm_hour = st.wHour;
-                        tm_local.tm_min = st.wMinute;
-                        tm_local.tm_sec = st.wSecond;
-                        tm_local.tm_isdst = 0;
-                        
-                        time_t modTime = mktime(&tm_local);
-                        if (modTime != -1) {
-                            this->lastModifiedTime = std::chrono::system_clock::from_time_t(modTime);
-                        }
-                    }
-                }
-            #else
-                // Linux/Unix平台：使用stat获取时间
-                struct stat st;
-                if (stat(path.string().c_str(), &st) == 0) {
-                    this->lastModifiedTime = std::chrono::system_clock::from_time_t(st.st_mtime);
-                }
-            #endif
-        }
-        
-        // 尝试获取创建时间和访问时间（平台特定）
+        // 统一使用平台特定的API获取文件时间，确保符号链接的时间戳也能正确获取
         #ifdef _WIN32
-            // Windows平台获取文件时间
+            // Windows平台：使用Windows API获取文件时间
             WIN32_FILE_ATTRIBUTE_DATA fileInfo;
             if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
-                // 创建时间
                 SYSTEMTIME st;
+                tm tm_local;
+                
+                // 最后修改时间
+                if (FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &st)) {
+                    tm_local.tm_year = st.wYear - 1900;
+                    tm_local.tm_mon = st.wMonth - 1;
+                    tm_local.tm_mday = st.wDay;
+                    tm_local.tm_hour = st.wHour;
+                    tm_local.tm_min = st.wMinute;
+                    tm_local.tm_sec = st.wSecond;
+                    tm_local.tm_isdst = 0;
+                    
+                    time_t modTime = mktime(&tm_local);
+                    if (modTime != -1) {
+                        this->lastModifiedTime = std::chrono::system_clock::from_time_t(modTime);
+                    }
+                }
+                
+                // 创建时间
                 if (FileTimeToSystemTime(&fileInfo.ftCreationTime, &st)) {
                     struct tm tm;
                     tm.tm_year = st.wYear - 1900;
@@ -187,11 +169,24 @@ void File::initialize(const fs::path& path) {
                 }
             }
         #else
-            // Linux/Unix平台获取文件时间
-            struct stat st_time;
-            if (stat(path.string().c_str(), &st_time) == 0) {
-                this->creationTime = std::chrono::system_clock::from_time_t(st_time.st_ctime);
-                this->lastAccessTime = std::chrono::system_clock::from_time_t(st_time.st_atime);
+            // Linux/Unix平台：使用stat获取时间，对于符号链接使用lstat
+            struct stat st;
+            int statResult;
+            if (fs::is_symlink(status)) {
+                // 对于符号链接，使用lstat获取符号链接本身的元数据
+                statResult = lstat(path.string().c_str(), &st);
+            } else {
+                // 对于普通文件和目录，使用stat获取元数据
+                statResult = stat(path.string().c_str(), &st);
+            }
+            
+            if (statResult == 0) {
+                // 最后修改时间
+                this->lastModifiedTime = std::chrono::system_clock::from_time_t(st.st_mtime);
+                // 创建时间（Linux下ctime实际上是状态改变时间）
+                this->creationTime = std::chrono::system_clock::from_time_t(st.st_ctime);
+                // 最后访问时间
+                this->lastAccessTime = std::chrono::system_clock::from_time_t(st.st_atime);
             }
         #endif
         

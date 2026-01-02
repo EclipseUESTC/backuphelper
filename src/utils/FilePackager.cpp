@@ -341,7 +341,8 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
             
             // 恢复文件时间戳
             // 注意：使用平台特定的API来设置文件时间，避免时钟系统差异导致的问题
-            if (fileMeta.fileType == 0 || fileMeta.fileType == 1) {  // 普通文件和目录
+            // 普通文件、目录和符号链接都需要恢复时间戳
+            if (fileMeta.fileType == 0 || fileMeta.fileType == 1 || fileMeta.fileType == 2) {  // 普通文件、目录和符号链接
                 try {
                     // 将Unix时间戳转换为time_t
                     uint64_t unixTime = fileMeta.lastModifiedTime;
@@ -391,7 +392,13 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                         times[1].tv_nsec = 0;
                         
                         // 使用utimensat函数设置文件时间，0表示使用当前工作目录
-                        if (utimensat(0, outputPath.c_str(), times, 0) != 0) {
+                        // 对于符号链接，需要使用AT_SYMLINK_NOFOLLOW标志，不跟随符号链接
+                        int flags = 0;
+                        if (fileMeta.fileType == 2) {
+                            flags = AT_SYMLINK_NOFOLLOW;
+                        }
+                        
+                        if (utimensat(0, outputPath.c_str(), times, flags) != 0) {
                             std::cerr << "Warning: Cannot set file times for " << outputPath 
                                       << " (" << strerror(errno) << ")" << std::endl;
                         }

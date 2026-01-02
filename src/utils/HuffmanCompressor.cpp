@@ -202,6 +202,31 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
                 return false;
             }
             dst << src.rdbuf();
+            src.close();
+            dst.close();
+            
+            // 复制原始文件的元数据到压缩文件
+            std::error_code ec;
+            
+            // 复制权限
+            std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+            }
+            
+            // 复制时间戳
+            try {
+                auto fileTime = std::filesystem::last_write_time(inputFilePath, ec);
+                if (!ec) {
+                    std::filesystem::last_write_time(outputFilePath, fileTime, ec);
+                    if (ec) {
+                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                    }
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+            }
+            
             return true;
         }
         
@@ -231,6 +256,29 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             }
             outFile.write(reinterpret_cast<const char*>(inputData.data()), inputData.size());
             outFile.close();
+            
+            // 复制原始文件的元数据到压缩文件
+            std::error_code ec;
+            
+            // 复制权限
+            std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+            }
+            
+            // 复制时间戳
+            try {
+                auto fileTime = std::filesystem::last_write_time(inputFilePath, ec);
+                if (!ec) {
+                    std::filesystem::last_write_time(outputFilePath, fileTime, ec);
+                    if (ec) {
+                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                    }
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+            }
+            
             return true;
         }
         
@@ -289,6 +337,29 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             outFile.close();
             delete root;
             root = nullptr;
+            
+            // 复制原始文件的元数据到压缩文件
+            std::error_code ec;
+            
+            // 复制权限
+            std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
+            if (ec) {
+                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+            }
+            
+            // 复制时间戳
+            try {
+                auto fileTime = std::filesystem::last_write_time(inputFilePath, ec);
+                if (!ec) {
+                    std::filesystem::last_write_time(outputFilePath, fileTime, ec);
+                    if (ec) {
+                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                    }
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+            }
+            
             return true;
         }
         
