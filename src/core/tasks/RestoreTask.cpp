@@ -339,75 +339,71 @@ bool RestoreTask::execute() {
             }
         }
         
-        // 3. 检查是否需要解压
-        if (compressEnabled) {
-            // 检查文件是否压缩
-            // 处理以下情况：
-            // 1. 原始文件是.huff格式（未加密）
-            // 2. 原始文件是.huff.enc格式（加密），解密后变成临时文件
-            // 3. 符号链接文件，需要特殊处理
+        // 3. 处理符号链接和压缩文件
+        std::filesystem::path sourcePath(currentSource);
+        std::filesystem::path originalPath(backupFilePath);
+        
+        // 检查是否是符号链接
+        bool isSymlink = std::filesystem::is_symlink(sourcePath);
+        
+        if (isSymlink) {
+            // 处理符号链接文件
+            // 首先读取符号链接的原始目标
+            std::error_code ec;
+            std::filesystem::path originalSymlinkTarget = std::filesystem::read_symlink(sourcePath, ec);
+            if (ec) {
+                logger->error("Failed to read symlink target: " + currentSource);
+                status = TaskStatus::FAILED;
+                // 清理临时文件
+                if (needCleanup) {
+                    std::filesystem::remove(tempFile);
+                }
+                return false;
+            }
+            
+            // 处理符号链接目标，去掉.enc和.huff扩展名
+            std::string symlinkTargetStr = originalSymlinkTarget.string();
+            std::string finalSymlinkTarget = symlinkTargetStr;
+            
+            // 如果符号链接目标带有.enc扩展名，去掉它
+            if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
+                finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
+            }
+            
+            // 如果符号链接目标带有.huff扩展名，去掉它
+            if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
+                finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
+            }
+            
+            // 现在创建符号链接，使用修改后的目标路径
+            std::filesystem::path symlinkDestPath(currentDest);
+            // 先删除可能存在的目标文件
+            if (std::filesystem::exists(symlinkDestPath, ec)) {
+                std::filesystem::remove(symlinkDestPath, ec);
+            }
+            // 创建符号链接
+            std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
+            if (ec) {
+                logger->error("Failed to create symlink: " + currentDest);
+                status = TaskStatus::FAILED;
+                // 清理临时文件
+                if (needCleanup) {
+                    std::filesystem::remove(tempFile);
+                }
+                return false;
+            }
+            
+            // 复制符号链接的元数据
+            std::filesystem::permissions(symlinkDestPath, std::filesystem::status(sourcePath).permissions(), ec);
+            std::filesystem::last_write_time(symlinkDestPath, std::filesystem::last_write_time(sourcePath, ec), ec);
+            
+            logger->info("Restored: " + currentDest);
+            successCount++;
+        } else {
+            // 非符号链接文件，检查是否需要解压
             bool shouldDecompress = false;
-            std::filesystem::path sourcePath(currentSource);
-            std::filesystem::path originalPath(backupFilePath);
             
-            // 检查是否是符号链接
-            bool isSymlink = std::filesystem::is_symlink(sourcePath);
-            
-            if (isSymlink) {
-                // 处理符号链接文件
-                // 首先读取符号链接的原始目标
-                std::error_code ec;
-                std::filesystem::path originalSymlinkTarget = std::filesystem::read_symlink(sourcePath, ec);
-                if (ec) {
-                    logger->error("Failed to read symlink target: " + currentSource);
-                    status = TaskStatus::FAILED;
-                    // 清理临时文件
-                    if (needCleanup) {
-                        std::filesystem::remove(tempFile);
-                    }
-                    return false;
-                }
-                
-                // 处理符号链接目标，去掉.enc和.huff扩展名
-                std::string symlinkTargetStr = originalSymlinkTarget.string();
-                std::string finalSymlinkTarget = symlinkTargetStr;
-                
-                // 如果符号链接目标带有.enc扩展名，去掉它
-                if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
-                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
-                }
-                
-                // 如果符号链接目标带有.huff扩展名，去掉它
-                if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
-                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
-                }
-                
-                // 现在创建符号链接，使用修改后的目标路径
-                std::filesystem::path symlinkDestPath(currentDest);
-                // 先删除可能存在的目标文件
-                if (std::filesystem::exists(symlinkDestPath, ec)) {
-                    std::filesystem::remove(symlinkDestPath, ec);
-                }
-                // 创建符号链接
-                std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
-                if (ec) {
-                    logger->error("Failed to create symlink: " + currentDest);
-                    status = TaskStatus::FAILED;
-                    // 清理临时文件
-                    if (needCleanup) {
-                        std::filesystem::remove(tempFile);
-                    }
-                    return false;
-                }
-                
-                // 复制符号链接的元数据
-                std::filesystem::permissions(symlinkDestPath, std::filesystem::status(sourcePath).permissions(), ec);
-                std::filesystem::last_write_time(symlinkDestPath, std::filesystem::last_write_time(sourcePath, ec), ec);
-                
-                logger->info("Restored: " + currentDest);
-                successCount++;
-            } else {
-                // 非符号链接文件，检查是否需要解压
+            if (compressEnabled) {
                 // 如果当前文件是.huff格式，直接解压
                 if (sourcePath.extension().string() == ".huff") {
                     shouldDecompress = true;
@@ -417,57 +413,43 @@ bool RestoreTask::execute() {
                          originalPath.stem().extension().string() == ".huff") {
                     shouldDecompress = true;
                 }
-                
-                if (shouldDecompress) {
-                    logger->info("Decompressing file: " + currentSource);
-                    
-                    // 去掉目标文件的.huff扩展名
-                    std::string finalDest = currentDest;
-                    if (finalDest.size() > 5 && finalDest.substr(finalDest.size() - 5) == ".huff") {
-                        finalDest = finalDest.substr(0, finalDest.size() - 5);
-                    }
-                    
-                    if (FileSystem::decompressAndCopyFile(currentSource, finalDest)) {
-                        logger->info("Restored: " + finalDest);
-                        successCount++;
-                    } else {
-                        logger->error("Decompression failed: " + currentSource);
-                        status = TaskStatus::FAILED;
-                        // 清理临时文件
-                        if (needCleanup) {
-                            std::filesystem::remove(tempFile);
-                        }
-                        return false;
-                    }
-                } else {
-                    // 普通复制
-                    if (FileSystem::copyFile(currentSource, currentDest)) {
-                        logger->info("Restored: " + currentDest);
-                        successCount++;
-                    } else {
-                        logger->error("Copy failed: " + currentSource + " -> " + currentDest);
-                        status = TaskStatus::FAILED;
-                        // 清理临时文件
-                        if (needCleanup) {
-                            std::filesystem::remove(tempFile);
-                        }
-                        return false;
-                    }
-                }
             }
-        } else {
-            // 不压缩，直接复制
-            if (FileSystem::copyFile(currentSource, currentDest)) {
-                logger->info("Restored: " + currentDest);
-                successCount++;
-            } else {
-                logger->error("Copy failed: " + currentSource + " -> " + currentDest);
-                status = TaskStatus::FAILED;
-                // 清理临时文件
-                if (needCleanup) {
-                    std::filesystem::remove(tempFile);
+            
+            if (shouldDecompress) {
+                logger->info("Decompressing file: " + currentSource);
+                
+                // 去掉目标文件的.huff扩展名
+                std::string finalDest = currentDest;
+                if (finalDest.size() > 5 && finalDest.substr(finalDest.size() - 5) == ".huff") {
+                    finalDest = finalDest.substr(0, finalDest.size() - 5);
                 }
-                return false;
+                
+                if (FileSystem::decompressAndCopyFile(currentSource, finalDest)) {
+                    logger->info("Restored: " + finalDest);
+                    successCount++;
+                } else {
+                    logger->error("Decompression failed: " + currentSource);
+                    status = TaskStatus::FAILED;
+                    // 清理临时文件
+                    if (needCleanup) {
+                        std::filesystem::remove(tempFile);
+                    }
+                    return false;
+                }
+            } else {
+                // 普通复制
+                if (FileSystem::copyFile(currentSource, currentDest)) {
+                    logger->info("Restored: " + currentDest);
+                    successCount++;
+                } else {
+                    logger->error("Copy failed: " + currentSource + " -> " + currentDest);
+                    status = TaskStatus::FAILED;
+                    // 清理临时文件
+                    if (needCleanup) {
+                        std::filesystem::remove(tempFile);
+                    }
+                    return false;
+                }
             }
         }
         

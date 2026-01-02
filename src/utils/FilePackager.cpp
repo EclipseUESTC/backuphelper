@@ -32,14 +32,16 @@ FileMetadata::FileMetadata(const File& file, const std::filesystem::path& basePa
     this->permissions = file.getPermissions();
     
     // Time stamps
-    auto toUnixTime = [](const std::chrono::system_clock::time_point& tp) {
-        return std::chrono::duration_cast<std::chrono::seconds>(
-            tp.time_since_epoch()
-        ).count();
-    };
-    this->creationTime = toUnixTime(file.getCreationTime());
-    this->lastModifiedTime = toUnixTime(file.getLastModifiedTime());
-    this->lastAccessTime = toUnixTime(file.getLastAccessTime());
+        auto toUnixTime = [](const std::chrono::system_clock::time_point& tp) {
+            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
+                tp.time_since_epoch()
+            ).count();
+            // 确保时间戳为正数，避免uint64_t溢出导致1901年问题
+            return seconds > 0 ? static_cast<uint64_t>(seconds) : 0;
+        };
+        this->creationTime = toUnixTime(file.getCreationTime());
+        this->lastModifiedTime = toUnixTime(file.getLastModifiedTime());
+        this->lastAccessTime = toUnixTime(file.getLastAccessTime());
     
     // File type
     if (file.isRegularFile()) {
