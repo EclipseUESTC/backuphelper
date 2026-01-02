@@ -39,28 +39,22 @@ void File::initialize(const fs::path& path) {
         fs::file_status status = fs::symlink_status(path, ec);
         if (ec) {
             this->fileType = fs::file_type::none;
-            return;
-        }
-        this->fileType = status.type();
-        
-        // 获取硬链接数量和权限信息
-        #ifdef _WIN32
-            // Windows平台实现
+            // 确保元数据始终被初始化
+            this->fileSize = 0;
             this->hardLinkCount = 1;
             this->permissions = 0644; // 默认权限
             this->ownerId = 0;
             this->groupId = 0;
             this->isHardLink = false;
-        #else
-            struct stat st;
-            if (stat(path.string().c_str(), &st) == 0) {
-                this->hardLinkCount = st.st_nlink;
-                this->isHardLink = (this->hardLinkCount > 1);
-                this->permissions = st.st_mode & 07777; // 获取权限
-                this->ownerId = st.st_uid;
-                this->groupId = st.st_gid;
-            }
-        #endif
+            this->symlinkTarget.clear();
+            // 使用当前时间作为默认时间戳
+            auto now = std::chrono::system_clock::now();
+            this->creationTime = now;
+            this->lastModifiedTime = now;
+            this->lastAccessTime = now;
+            return;
+        }
+        this->fileType = status.type();
         
         // 获取文件大小
         if (fs::is_regular_file(status)) {
@@ -72,14 +66,47 @@ void File::initialize(const fs::path& path) {
             this->fileSize = 0;
         }
         
+        // 获取硬链接数量和权限信息
+        this->hardLinkCount = 1;
+        this->permissions = 0644; // 默认权限
+        this->ownerId = 0;
+        this->groupId = 0;
+        this->isHardLink = false;
+        
+        #ifdef _WIN32
+            // Windows平台实现
+            WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+            if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
+                // 获取文件属性
+                if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    // 目录处理
+                } else if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+                    // 符号链接处理
+                } else {
+                    // 普通文件处理
+                }
+            }
+        #else
+            struct stat st;
+            if (stat(path.string().c_str(), &st) == 0) {
+                this->hardLinkCount = st.st_nlink;
+                this->isHardLink = (this->hardLinkCount > 1);
+                this->permissions = st.st_mode & 07777; // 获取权限
+                this->ownerId = st.st_uid;
+                this->groupId = st.st_gid;
+            }
+        #endif
+        
         // 获取符号链接目标
+        this->symlinkTarget.clear();
         if (fs::is_symlink(status)) {
             this->symlinkTarget = fs::read_symlink(path, ec);
-        } else {
-            this->symlinkTarget.clear();
+            if (ec) {
+                this->symlinkTarget.clear();
+            }
         }
         
-        // 获取文件时间，使用symlink_status避免解析符号链接
+        // 获取文件时间戳，确保始终被初始化
         auto now = std::chrono::system_clock::now();
         this->creationTime = now;
         this->lastModifiedTime = now;
@@ -107,7 +134,9 @@ void File::initialize(const fs::path& path) {
                         tm_local.tm_isdst = 0;
                         
                         time_t modTime = mktime(&tm_local);
-                        this->lastModifiedTime = std::chrono::system_clock::from_time_t(modTime);
+                        if (modTime != -1) {
+                            this->lastModifiedTime = std::chrono::system_clock::from_time_t(modTime);
+                        }
                     }
                 }
             #else
@@ -125,12 +154,8 @@ void File::initialize(const fs::path& path) {
             WIN32_FILE_ATTRIBUTE_DATA fileInfo;
             if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
                 // 创建时间
-                FILETIME ftCreate, ftAccess, ftWrite;
                 SYSTEMTIME st;
-                
-                // 将FILETIME转换为SYSTEMTIME以获取创建时间
                 if (FileTimeToSystemTime(&fileInfo.ftCreationTime, &st)) {
-                    // 简单的时间转换，可能不够精确，但能满足基本需求
                     struct tm tm;
                     tm.tm_year = st.wYear - 1900;
                     tm.tm_mon = st.wMonth - 1;
@@ -140,7 +165,9 @@ void File::initialize(const fs::path& path) {
                     tm.tm_sec = st.wSecond;
                     tm.tm_isdst = 0;
                     time_t createTime = mktime(&tm);
-                    this->creationTime = std::chrono::system_clock::from_time_t(createTime);
+                    if (createTime != -1) {
+                        this->creationTime = std::chrono::system_clock::from_time_t(createTime);
+                    }
                 }
                 
                 // 访问时间
@@ -154,7 +181,9 @@ void File::initialize(const fs::path& path) {
                     tm.tm_sec = st.wSecond;
                     tm.tm_isdst = 0;
                     time_t accessTime = mktime(&tm);
-                    this->lastAccessTime = std::chrono::system_clock::from_time_t(accessTime);
+                    if (accessTime != -1) {
+                        this->lastAccessTime = std::chrono::system_clock::from_time_t(accessTime);
+                    }
                 }
             }
         #else
@@ -168,6 +197,20 @@ void File::initialize(const fs::path& path) {
         
     } catch (const std::exception& e) {
         std::cerr << "Error initializing file: " << e.what() << std::endl; 
+        // 确保元数据始终被初始化
+        this->fileType = fs::file_type::none;
+        this->fileSize = 0;
+        this->hardLinkCount = 1;
+        this->permissions = 0644; // 默认权限
+        this->ownerId = 0;
+        this->groupId = 0;
+        this->isHardLink = false;
+        this->symlinkTarget.clear();
+        // 使用当前时间作为默认时间戳
+        auto now = std::chrono::system_clock::now();
+        this->creationTime = now;
+        this->lastModifiedTime = now;
+        this->lastAccessTime = now;
     }
 }
 

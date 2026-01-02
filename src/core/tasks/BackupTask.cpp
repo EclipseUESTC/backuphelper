@@ -264,6 +264,25 @@ bool BackupTask::execute() {
                 return false;
             }
             
+            // 复制打包文件的元数据到加密后的文件
+            std::error_code ec;
+            auto fileTime = std::filesystem::last_write_time(finalPackagePath, ec);
+            if (!ec) {
+                std::filesystem::last_write_time(encryptedFile, fileTime, ec);
+                if (ec) {
+                    logger->warn("Failed to copy file time to encrypted package: " + encryptedFile);
+                }
+            }
+            
+            // 复制权限
+            auto permissions = std::filesystem::status(finalPackagePath, ec).permissions();
+            if (!ec) {
+                std::filesystem::permissions(encryptedFile, permissions, ec);
+                if (ec) {
+                    logger->warn("Failed to copy permissions to encrypted package: " + encryptedFile);
+                }
+            }
+            
             // 删除未加密的打包文件
             if (!FileSystem::removeFile(finalPackagePath)) {
                 logger->warn("Failed to remove unencrypted package file: " + finalPackagePath);
