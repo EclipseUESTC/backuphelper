@@ -450,10 +450,8 @@ bool FileSystem::decompressAndCopyFile(const std::string& source, const std::str
         return copyFile(source, destination);
     }
     
-    HuffmanCompressor compressor;
-    
-    // 先尝试解压
-    if (compressor.decompressFile(source, destination)) {
+    // 调用我们修改过的decompressFile函数，它会处理元数据
+    if (decompressFile(source, destination)) {
         return true;
     }
     

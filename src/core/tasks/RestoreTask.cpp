@@ -233,18 +233,18 @@ bool RestoreTask::execute() {
                         }
                         
                         // 处理符号链接目标，去掉.enc和.huff扩展名
-                std::string symlinkTargetStr = originalSymlinkTarget.string();
-                std::string finalSymlinkTarget = symlinkTargetStr;
-                
-                // 如果符号链接目标带有.enc扩展名，去掉它
-                if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
-                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
-                }
-                
-                // 如果符号链接目标带有.huff扩展名，去掉它
-                if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
-                    finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
-                }
+                        std::string symlinkTargetStr = originalSymlinkTarget.string();
+                        std::string finalSymlinkTarget = symlinkTargetStr;
+                        
+                        // 如果符号链接目标带有.enc扩展名，去掉它
+                        if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
+                            finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
+                        }
+                        
+                        // 如果符号链接目标带有.huff扩展名，去掉它
+                        if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
+                            finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
+                        }
                         
                         // 现在创建符号链接，使用修改后的目标路径
                         std::filesystem::path symlinkDestPath(unpackedRestoreFile);
@@ -281,7 +281,25 @@ bool RestoreTask::execute() {
                                 finalDest = finalDest.substr(0, finalDest.size() - 5);
                             }
                             
+                            // 保存原始文件的元数据
+                            std::error_code ec;
+                            auto originalFileTime = std::filesystem::last_write_time(unpackedFilePath, ec);
+                            auto originalPermissions = std::filesystem::status(unpackedFilePath, ec).permissions();
+                            
                             unpackedSuccess = FileSystem::decompressAndCopyFile(unpackedFilePath, finalDest);
+                            
+                            // 确保解压后的文件具有正确的元数据
+                            if (unpackedSuccess && !ec) {
+                                std::filesystem::last_write_time(finalDest, originalFileTime, ec);
+                                if (ec) {
+                                    logger->warn("Failed to copy file time to decompressed file: " + finalDest);
+                                }
+                                
+                                std::filesystem::permissions(finalDest, originalPermissions, ec);
+                                if (ec) {
+                                    logger->warn("Failed to copy permissions to decompressed file: " + finalDest);
+                                }
+                            }
                         } else {
                             // 普通复制
                             unpackedSuccess = FileSystem::copyFile(unpackedFilePath, unpackedRestoreFile);

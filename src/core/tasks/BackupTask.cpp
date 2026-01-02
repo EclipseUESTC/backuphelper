@@ -284,18 +284,21 @@ bool BackupTask::execute() {
                 
                 // 复制加密前文件的元数据到加密后的文件
                 std::error_code ec;
-                auto fileTime = std::filesystem::last_write_time(backupFile, ec);
-                if (!ec) {
-                    std::filesystem::last_write_time(encryptedFile, fileTime, ec);
-                    if (ec) {
-                        logger->warn("Failed to copy file time to encrypted file: " + encryptedFile);
-                    }
-                }
                 
-                // 复制权限
-                auto permissions = std::filesystem::status(backupFile, ec).permissions();
+                // 获取加密前文件的元数据
+                auto fileStatus = std::filesystem::status(backupFile, ec);
                 if (!ec) {
-                    std::filesystem::permissions(encryptedFile, permissions, ec);
+                    // 复制修改时间
+                    auto fileTime = std::filesystem::last_write_time(backupFile, ec);
+                    if (!ec) {
+                        std::filesystem::last_write_time(encryptedFile, fileTime, ec);
+                        if (ec) {
+                            logger->warn("Failed to copy file time to encrypted file: " + encryptedFile);
+                        }
+                    }
+                    
+                    // 复制权限
+                    std::filesystem::permissions(encryptedFile, fileStatus.permissions(), ec);
                     if (ec) {
                         logger->warn("Failed to copy permissions to encrypted file: " + encryptedFile);
                     }
