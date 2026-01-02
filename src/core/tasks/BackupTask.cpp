@@ -233,9 +233,15 @@ bool BackupTask::execute() {
         
         finalPackagePath = (std::filesystem::path(backupPath) / packageFileName).string();
         
+        // 在删除原始文件之前，将它们转换为File对象，以便正确读取元数据
+        std::vector<File> backupFileObjects;
+        for (const auto& filePath : backedUpFiles) {
+            backupFileObjects.emplace_back(filePath);
+        }
+        
         // 创建FilePackager实例并执行拼接
         FilePackager packager;
-        if (!packager.packageFiles(backedUpFiles, finalPackagePath)) {
+        if (!packager.packageFiles(backupFileObjects, finalPackagePath)) {
             logger->error("Failed to package backup files");
             status = TaskStatus::FAILED;
             return false;
