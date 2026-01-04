@@ -30,13 +30,18 @@ private:
     std::string packageFileName;
     // 加密密码
     std::string password;
+    // 中断标志
+    std::atomic<bool>* interrupted;
 
 public:
     BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
               const std::vector<std::shared_ptr<Filter>>& filterList = {}, bool compress = true, 
               bool package = false, const std::string& pkgFileName = "backup.pkg",
-              const std::string& pass = "");
+              const std::string& pass = "",
+              std::atomic<bool>* interruptFlag = nullptr);
     bool execute();
     TaskStatus getStatus() const;
+    // 检查是否被中断
+    bool isInterrupted() const;
 
 };

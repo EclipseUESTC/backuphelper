@@ -44,9 +44,7 @@ bool FileSystem::createDirectories(const std::string& path) {
     
     // 否则创建目录
     bool result = fs::create_directories(path, ec);
-    if (ec) {
-        std::cerr << "Error: Failed to create directories for " << path << " (" << ec.message() << ")" << std::endl;
-    }
+    // 只在创建失败时返回错误，不输出信息
     return result && !ec;
 }
 
@@ -58,7 +56,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         std::error_code ec;
         fs::create_directories(destPath.parent_path(), ec);
         if (ec) {
-            std::cerr << "Error: Failed to create directories for " << destPath.parent_path() << std::endl;
             return false;
         }
     }
@@ -78,7 +75,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             // 读取符号链接目标
             fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to read symlink " << source << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
             
@@ -87,7 +83,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             if (fs::exists(destPath, ec) && fs::is_symlink(destPath, ec)) {
                 fs::remove(destPath, ec);
                 if (ec) {
-                    std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
                     return false;
                 }
             }
@@ -97,10 +92,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             if (symlinkTarget.is_absolute()) {
                 relativeTarget = symlinkTarget;
             } else {
-                // 对于符号链接，检查目标是否是普通文件，并且是否需要添加.huff扩展名
-                // 注意：这里我们不进行实际的压缩检查，而是通过目标路径来判断
-                // 因为当前函数是通用的，不知道是否启用了压缩
-                // 实际的压缩逻辑在调用者中处理
                 relativeTarget = symlinkTarget;
             }
             
@@ -111,15 +102,9 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
                 // 如果创建失败，检查是否是因为目标文件已经存在
                 if (ec.value() == static_cast<int>(std::errc::file_exists)) {
                     // 目标文件已经存在，并且不是符号链接
-                    // 打印信息，说明跳过了符号链接创建
-                    std::cout << "Info: Skipping symlink creation for " << source << " -> " << destination << std::endl;
-                    std::cout << "  Reason: Target file already exists as a regular file or directory" << std::endl;
-                    // 继续执行，不中断备份操作
                     return true;
                 } else {
-                    // 其他错误，打印详细信息并返回失败
-                    std::cerr << "Error: Failed to create symlink " << destination << " -> " << relativeTarget 
-                             << " (" << ec.message() << ")" << std::endl;
+                    // 其他错误，返回失败
                     return false;
                 }
             } else {
@@ -130,16 +115,10 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (symlinkCreated) {
             // 复制符号链接的元数据（权限、时间戳等）
             fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
-            if (ec) {
-                std::cerr << "Warning: Failed to copy symlink permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-            }
             
             // 复制符号链接的时间戳
             std::error_code timeEc;
             fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
-            if (timeEc) {
-                std::cerr << "Warning: Failed to copy symlink timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
-            }
         }
         
         return true;
@@ -148,7 +127,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     // 如果不是符号链接，使用 symlink_status 检查类型
     auto link_status = fs::symlink_status(sourcePath, ec);
     if (ec) {
-        std::cerr << "Error: Failed to get file status for " << source << " (" << ec.message() << ")" << std::endl;
         return false;
     }
     
@@ -159,29 +137,20 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (fs::is_symlink(destPath, ec)) {
             fs::remove(destPath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
                 return false;
             }
         }
         
         if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing | fs::copy_options::copy_symlinks, ec)) {
-            std::cerr << "Error: Failed to copy regular file from " << source << " to " << destination 
-                     << " (" << ec.message() << ")" << std::endl;
             return false;
         }
         
         // 复制文件元数据（权限、时间戳等）
         fs::permissions(destination, fs::status(source).permissions(), ec);
-        if (ec) {
-            std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-        }
         
         // 复制时间戳
         std::error_code timeEc;
         fs::last_write_time(destination, fs::last_write_time(source, timeEc), timeEc);
-        if (timeEc) {
-            std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
-        }
         
     } else if (fs::is_directory(link_status)) {
         
@@ -190,7 +159,6 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (fs::is_symlink(destPath, ec)) {
             fs::remove(destPath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to remove existing symlink " << destination << std::endl;
                 return false;
             }
         }
@@ -198,23 +166,16 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         if (!fs::exists(destPath, ec)) {
             fs::create_directories(destPath, ec);
             if (ec) {
-                std::cerr << "Error: Failed to create directory " << destination << " (" << ec.message() << ")" << std::endl;
                 return false;
             }
         }
         
         // 复制目录的元数据（权限、时间戳等）
         fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
-        if (ec) {
-            std::cerr << "Warning: Failed to copy directory permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-        }
         
         // 复制目录的时间戳
         std::error_code timeEc;
         fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
-        if (timeEc) {
-            std::cerr << "Warning: Failed to copy directory timestamp for " << destination << " (" << timeEc.message() << ")" << std::endl;
-        }
         
     } else if (fs::is_fifo(link_status)) {
         
@@ -225,17 +186,15 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
         
         #ifdef _WIN32
             // Windows不支持直接创建类似Unix的命名管道文件
-            std::cerr << "Error: FIFO files are not supported on Windows" << std::endl;
             return false;
         #else
             if (mkfifo(destination.c_str(), 0666) != 0) {
-                std::cerr << "Error: Failed to create FIFO " << destination << " (" << strerror(errno) << ")" << std::endl;
                 return false;
             }
         #endif
         
     } else {
-        std::cerr << "Error: Unsupported file type for " << source << std::endl;
+        // 不支持的文件类型
         return false;
     }
     
@@ -348,10 +307,6 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
     // 让调用者决定如何处理，避免将原始文件复制到.huff文件中
     if (compressedSize >= originalSize) {
         std::filesystem::remove(destination);
-        std::cout << "Info: File compression skipped for " << source << std::endl;
-        std::cout << "  Original size: " << originalSize << " bytes" << std::endl;
-        std::cout << "  Compressed size: " << compressedSize << " bytes" << std::endl;
-        std::cout << "  Compression not performed (compressed file is larger than original)" << std::endl;
         return false;
     }
     
@@ -360,29 +315,16 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
     
     // 复制权限
     fs::permissions(destination, fs::status(source).permissions(), ec);
-    if (ec) {
-        std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-    }
     
     // 复制时间戳
     try {
         auto fileTime = fs::last_write_time(source, ec);
         if (!ec) {
             fs::last_write_time(destination, fileTime, ec);
-            if (ec) {
-                std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
-            }
         }
-    } catch (const std::exception& e) {
-        std::cerr << "Warning: Failed to copy file metadata for " << destination << " (" << e.what() << ")" << std::endl;
+    } catch (const std::exception&) {
+        // 静默处理元数据复制异常
     }
-    
-    // 压缩成功，打印压缩效率
-    double compressionRatio = static_cast<double>(originalSize - compressedSize) / originalSize * 100;
-    std::cout << "Info: File compressed successfully: " << source << std::endl;
-    std::cout << "  Original size: " << originalSize << " bytes" << std::endl;
-    std::cout << "  Compressed size: " << compressedSize << " bytes" << std::endl;
-    std::cout << "  Compression ratio: " << std::fixed << std::setprecision(2) << compressionRatio << "%" << std::endl;
     
     return true;
 }
@@ -408,31 +350,18 @@ bool FileSystem::decompressFile(const std::string& source, const std::string& de
         auto currentTime = fs::last_write_time(source, ec);
         if (!ec && currentTime.time_since_epoch().count() > 0) {
             fs::last_write_time(destination, currentTime, ec);
-            if (ec) {
-                std::cerr << "Warning: Failed to copy file timestamp for " << destination << " (" << ec.message() << ")" << std::endl;
-            }
         } else {
             // 如果时间戳无效，使用当前时间
-            // 直接调用std::filesystem::last_write_time获取当前时间，避免类型转换问题
             auto currentTimeNow = fs::last_write_time(source, ec);
             if (!ec) {
                 fs::last_write_time(destination, currentTimeNow, ec);
-            } else {
-                // 如果无法获取当前时间，忽略时间戳设置
-                std::cerr << "Warning: Failed to get current time for " << destination << " (" << ec.message() << ")" << std::endl;
             }
         }
-    } else {
-        // 如果获取原始时间失败，忽略时间戳设置
-        std::cerr << "Warning: Failed to get original time for " << destination << " (" << ec.message() << ")" << std::endl;
     }
     
     // 复制权限
     if (!ec) {
         fs::permissions(destination, originalPermissions, ec);
-        if (ec) {
-            std::cerr << "Warning: Failed to copy file permissions for " << destination << " (" << ec.message() << ")" << std::endl;
-        }
     }
     
     return true;
@@ -463,7 +392,6 @@ bool FileSystem::decompressAndCopyFile(const std::string& source, const std::str
     // 先检查源文件是否是符号链接
     if (fs::is_symlink(source)) {
         // 符号链接直接复制，不尝试解压
-        std::cerr << "Info: Source is a symlink, copying directly" << std::endl;
         return copyFile(source, destination);
     }
     
@@ -473,7 +401,6 @@ bool FileSystem::decompressAndCopyFile(const std::string& source, const std::str
     }
     
     // 如果解压失败，可能是因为文件没有被压缩，直接复制
-    std::cerr << "Warning: Failed to decompress file " << source << ", copying as regular file" << std::endl;
     return copyFile(source, destination);
 }
 
@@ -489,18 +416,15 @@ bool FileSystem::clearDirectory(const std::string& path) {
     
     // 检查目录是否存在
     if (!fs::exists(path, ec)) {
-        std::cerr << "clearDirectory: Directory does not exist: " << path << ", Error: " << ec.message() << std::endl;
         return false;
     }
     if (!fs::is_directory(path, ec)) {
-        std::cerr << "clearDirectory: Path is not a directory: " << path << ", Error: " << ec.message() << std::endl;
         return false;
     }
     
     // 遍历目录并删除所有内容
     for (const auto& entry : fs::directory_iterator(path, ec)) {
         if (ec) {
-            std::cerr << "clearDirectory: Failed to iterate directory: " << path << ", Error: " << ec.message() << std::endl;
             return false;
         }
         
@@ -509,19 +433,15 @@ bool FileSystem::clearDirectory(const std::string& path) {
             if (!fs::remove_all(entryPath, ec)) {
                 // 检查是否真的有错误
                 if (ec) {
-                    std::cerr << "clearDirectory: Failed to remove directory: " << entryPath.string() << ", Error: " << ec.message() << std::endl;
                     return false;
                 }
-                // 如果没有错误码，说明目录已经不存在，继续处理
             }
         } else {
             if (!fs::remove(entryPath, ec)) {
                 // 检查是否真的有错误
                 if (ec) {
-                    std::cerr << "clearDirectory: Failed to remove file: " << entryPath.string() << ", Error: " << ec.message() << std::endl;
                     return false;
                 }
-                // 如果没有错误码，说明文件已经不存在，继续处理
             }
         }
     }
@@ -535,11 +455,9 @@ bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& 
     
     // 检查源目录是否存在
     if (!fs::exists(sourceDir, ec)) {
-        std::cerr << "copyDirectory: Source directory does not exist: " << sourceDir << ", Error: " << ec.message() << std::endl;
         return false;
     }
     if (!fs::is_directory(sourceDir, ec)) {
-        std::cerr << "copyDirectory: Source path is not a directory: " << sourceDir << ", Error: " << ec.message() << std::endl;
         return false;
     }
     
@@ -547,17 +465,13 @@ bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& 
     if (!fs::create_directories(destDir, ec)) {
         // 检查是否因为目录已存在而失败（这是正常情况，不是错误）
         if (ec) {
-            std::cerr << "copyDirectory: Failed to create destination directory: " << destDir << ", Error: " << ec.message() << std::endl;
             return false;
         }
-        // 目录已存在，这是正常情况，继续执行
-        std::cout << "copyDirectory: Destination directory already exists: " << destDir << std::endl;
     }
     
     // 遍历源目录并复制所有内容
     for (const auto& entry : fs::directory_iterator(sourceDir, ec)) {
         if (ec) {
-            std::cerr << "copyDirectory: Failed to iterate source directory: " << sourceDir << ", Error: " << ec.message() << std::endl;
             return false;
         }
         
@@ -568,17 +482,14 @@ bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& 
         if (fs::is_symlink(sourcePath)) {
             // 使用copyFile函数处理符号链接
             if (!copyFile(sourcePath.string(), destPath.string())) {
-                std::cerr << "copyDirectory: Failed to copy symlink: " << sourcePath.string() << " to " << destPath.string() << std::endl;
                 return false;
             }
         } else if (entry.is_directory(ec)) {
             if (!copyDirectory(sourcePath.string(), destPath.string())) {
-                std::cerr << "copyDirectory: Failed to copy subdirectory: " << sourcePath.string() << " to " << destPath.string() << std::endl;
                 return false;
             }
         } else {
             if (!fs::copy_file(sourcePath, destPath, fs::copy_options::overwrite_existing, ec)) {
-                std::cerr << "copyDirectory: Failed to copy file: " << sourcePath.string() << " to " << destPath.string() << ", Error: " << ec.message() << std::endl;
                 return false;
             }
         }

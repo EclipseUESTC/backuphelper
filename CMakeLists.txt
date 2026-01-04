@@ -54,6 +54,7 @@ add_executable(FilterTests
     src/utils/ConsoleLogger.cpp 
     src/utils/FileSystem.cpp
     src/utils/HuffmanCompressor.cpp
+    src/utils/FileSystemMonitor.cpp
 )
 target_include_directories(FilterTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
@@ -83,11 +84,14 @@ add_executable(BackupHelper
     src/core/models/File.cpp
     src/core/tasks/BackupTask.cpp
     src/core/tasks/RestoreTask.cpp
+    src/core/RealTimeBackupManager.cpp
+    src/core/TimerBackupManager.cpp
     src/utils/ConsoleLogger.cpp
     src/utils/FileSystem.cpp
     src/utils/HuffmanCompressor.cpp
     src/utils/FilePackager.cpp
     src/utils/Encryption.cpp
+    src/utils/FileSystemMonitor.cpp
 )
 
 target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -100,4 +104,13 @@ if(OPENSSL_FOUND)
     target_link_libraries(BackupHelper PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 else()
     message(FATAL_ERROR "OpenSSL not found. Please install OpenSSL.")
+endif()
+
+# 链接线程库
+find_package(Threads REQUIRED)
+target_link_libraries(BackupHelper PRIVATE Threads::Threads)
+
+# 链接filesystem库（非MSVC平台需要）
+if(NOT MSVC)
+    target_link_libraries(BackupHelper PRIVATE stdc++fs)
 endif()

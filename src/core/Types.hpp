@@ -5,7 +5,8 @@ enum class TaskStatus {
     PENDING,
     RUNNING,
     COMPLETED,
-    FAILED
+    FAILED,
+    CANCELLED
 };
 
 enum class ScheduleType {
@@ -20,6 +21,7 @@ inline std::string toString(TaskStatus status) {
         case TaskStatus::RUNNING: return "RUNNING";
         case TaskStatus::COMPLETED: return "COMPLETED";
         case TaskStatus::FAILED: return "FAILED";
+        case TaskStatus::CANCELLED: return "CANCELLED";
         default: return "UNKNOWN";
     }
 }

@@ -9,4 +9,7 @@ public:
     void error(const std::string& message) override;
 
     void warn(const std::string& message) override;
+    
+    void debug(const std::string& message) override;
+
 };

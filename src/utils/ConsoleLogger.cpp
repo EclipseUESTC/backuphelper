@@ -24,3 +24,7 @@ void ConsoleLogger::error(const std::string& message) {
 void ConsoleLogger::warn(const std::string& message) {
     std::cout << "[" << getCurrentTime() << "] [WARN] " << message << std::endl;
 }
+
+void ConsoleLogger::debug(const std::string& message) {
+    std::cout << "[" << getCurrentTime() << "] [DEBUG] " << message << std::endl;
+}

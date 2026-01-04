@@ -74,18 +74,7 @@ void File::initialize(const fs::path& path) {
         this->isHardLink = false;
         
         #ifdef _WIN32
-            // Windows平台实现
-            WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-            if (GetFileAttributesExA(path.string().c_str(), GetFileExInfoStandard, &fileInfo)) {
-                // 获取文件属性
-                if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                    // 目录处理
-                } else if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-                    // 符号链接处理
-                } else {
-                    // 普通文件处理
-                }
-            }
+            // Windows平台实现 - 使用后面定义的fileInfo变量
         #else
             struct stat st;
             if (stat(path.string().c_str(), &st) == 0) {

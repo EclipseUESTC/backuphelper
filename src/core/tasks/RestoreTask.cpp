@@ -5,13 +5,23 @@
 #include <filesystem>
 
 RestoreTask::RestoreTask(const std::string& backup, const std::string& restore, ILogger* log, 
-                       const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName, const std::string& pass) 
-    : backupPath(backup), restorePath(restore), status(TaskStatus::PENDING), logger(log), filters(filterList), 
-      compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName), password(pass) {}
+                       const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, 
+                       const std::string& pkgFileName, const std::string& pass, 
+                       std::atomic<bool>* interruptFlag) 
+    : backupPath(backup), restorePath(restore), status(TaskStatus::PENDING), logger(log), 
+      filters(filterList), compressEnabled(compress), packageEnabled(package), 
+      packageFileName(pkgFileName), password(pass), interrupted(interruptFlag) {}
 
 bool RestoreTask::execute() {
     logger->info("Starting restore: " + backupPath + " -> " + restorePath);
     status = TaskStatus::RUNNING;
+    
+    // 检查是否被中断
+    if (isInterrupted()) {
+        logger->info("Restore interrupted.");
+        status = TaskStatus::CANCELLED;
+        return false;
+    }
     
     // 检查还原目录是否存在，如果不存在则尝试创建
     if (!FileSystem::exists(restorePath)) {
@@ -68,6 +78,13 @@ bool RestoreTask::execute() {
     int successCount = 0;
     
     for (const auto& backupFile : files) {
+        // 检查是否被中断
+        if (isInterrupted()) {
+            logger->info("Restore interrupted.");
+            status = TaskStatus::CANCELLED;
+            return false;
+        }
+        
         std::string backupFilePath = backupFile.getFilePath().string();
         std::string relativePath = backupFile.getRelativePath(std::filesystem::path(backupPath)).string();
         std::string restoreFile = (std::filesystem::path(restorePath) / relativePath).string();
@@ -194,6 +211,18 @@ bool RestoreTask::execute() {
                 auto unpackedFiles = FileSystem::getAllFiles(tempUnpackDir);
                 
                 for (const auto& unpackedFile : unpackedFiles) {
+                    // 检查是否被中断
+                    if (isInterrupted()) {
+                        logger->info("Restore interrupted.");
+                        status = TaskStatus::CANCELLED;
+                        // 清理临时文件和目录
+                        std::filesystem::remove_all(tempUnpackDir);
+                        if (needCleanup) {
+                            std::filesystem::remove(tempFile);
+                        }
+                        return false;
+                    }
+                    
                     std::string unpackedFilePath = unpackedFile.getFilePath().string();
                     std::string unpackedRelativePath = unpackedFile.getRelativePath(std::filesystem::path(tempUnpackDir)).string();
                     std::string unpackedRestoreFile = (std::filesystem::path(restorePath) / unpackedRelativePath).string();
@@ -471,4 +500,8 @@ bool RestoreTask::execute() {
 
 TaskStatus RestoreTask::getStatus() const {
     return status;
+}
+
+bool RestoreTask::isInterrupted() const {
+    return interrupted && *interrupted;
 }

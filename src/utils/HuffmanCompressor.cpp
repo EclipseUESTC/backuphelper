@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 HuffmanCompressor::HuffmanCompressor() : root(nullptr) {}
 
@@ -181,7 +183,6 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         // 1. 读取输入文件内容
         std::ifstream inFile(inputFilePath, std::ios::binary);
         if (!inFile.is_open()) {
-            std::cerr << "Error: Could not open input file: " << inputFilePath << std::endl;
             return false;
         }
         
@@ -198,7 +199,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             std::ifstream src(inputFilePath, std::ios::binary);
             std::ofstream dst(outputFilePath, std::ios::binary);
             if (!src || !dst) {
-                std::cerr << "Error: Could not copy small file" << std::endl;
+                
                 return false;
             }
             dst << src.rdbuf();
@@ -209,22 +210,22 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             std::error_code ec;
             
             // 复制权限
-            std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
+            fs::permissions(outputFilePath, fs::status(inputFilePath).permissions(), ec);
             if (ec) {
-                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                
             }
             
             // 复制时间戳
             try {
-                auto fileTime = std::filesystem::last_write_time(inputFilePath, ec);
+                auto fileTime = fs::last_write_time(inputFilePath, ec);
                 if (!ec) {
                     std::filesystem::last_write_time(outputFilePath, fileTime, ec);
                     if (ec) {
-                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                        
                     }
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+                
             }
             
             return true;
@@ -235,7 +236,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         inFile.close();
         
         if (inputData.empty()) {
-            std::cerr << "Error: Input file is empty." << std::endl;
+            
             return false;
         }
         
@@ -251,7 +252,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             // 直接复制文件，不进行压缩
             std::ofstream outFile(outputFilePath, std::ios::binary);
             if (!outFile) {
-                std::cerr << "Error: Could not open output file for direct copy." << std::endl;
+                
                 return false;
             }
             outFile.write(reinterpret_cast<const char*>(inputData.data()), inputData.size());
@@ -263,7 +264,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             // 复制权限
             std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
             if (ec) {
-                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                
             }
             
             // 复制时间戳
@@ -272,11 +273,11 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
                 if (!ec) {
                     std::filesystem::last_write_time(outputFilePath, fileTime, ec);
                     if (ec) {
-                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                        
                     }
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+                
             }
             
             return true;
@@ -328,7 +329,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         if (totalCompressedSize >= inputData.size()) {
             std::ofstream outFile(outputFilePath, std::ios::binary);
             if (!outFile) {
-                std::cerr << "Error: Could not open output file for direct copy." << std::endl;
+                
                 delete root;
                 root = nullptr;
                 return false;
@@ -344,7 +345,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
             // 复制权限
             std::filesystem::permissions(outputFilePath, std::filesystem::status(inputFilePath).permissions(), ec);
             if (ec) {
-                std::cerr << "Warning: Failed to copy file permissions for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                
             }
             
             // 复制时间戳
@@ -353,11 +354,11 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
                 if (!ec) {
                     std::filesystem::last_write_time(outputFilePath, fileTime, ec);
                     if (ec) {
-                        std::cerr << "Warning: Failed to copy file timestamp for " << outputFilePath << " (" << ec.message() << ")" << std::endl;
+                        
                     }
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Warning: Failed to copy file metadata for " << outputFilePath << " (" << e.what() << ")" << std::endl;
+                
             }
             
             return true;
@@ -366,7 +367,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         // 7. 写入压缩文件
         std::ofstream outFile(outputFilePath, std::ios::binary);
         if (!outFile.is_open()) {
-            std::cerr << "Error: Could not open output file: " << outputFilePath << std::endl;
+            
             delete root;
             root = nullptr;
             return false;
@@ -405,7 +406,7 @@ bool HuffmanCompressor::compressFile(const std::string& inputFilePath, const std
         return true;
         
     } catch (const std::exception& e) {
-        std::cerr << "Error during compression: " << e.what() << std::endl;
+        
         delete root;
         root = nullptr;
         return false;
@@ -417,7 +418,7 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
         // 1. 读取压缩文件
         std::ifstream inFile(inputFilePath, std::ios::binary);
         if (!inFile.is_open()) {
-            std::cerr << "Error: Could not open input file: " << inputFilePath << std::endl;
+            
             return false;
         }
         
@@ -480,7 +481,7 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
         
         // 验证解码结果大小
         if (decodedData.size() != originalSize) {
-            std::cerr << "Error: Decoded data size mismatch!" << std::endl;
+            
             delete root;
             root = nullptr;
             return false;
@@ -489,7 +490,7 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
         // 10. 写入解压文件
         std::ofstream outFile(outputFilePath, std::ios::binary);
         if (!outFile.is_open()) {
-            std::cerr << "Error: Could not open output file: " << outputFilePath << std::endl;
+            
             delete root;
             root = nullptr;
             return false;
@@ -505,7 +506,7 @@ bool HuffmanCompressor::decompressFile(const std::string& inputFilePath, const s
         return true;
         
     } catch (const std::exception& e) {
-        std::cerr << "Error during decompression: " << e.what() << std::endl;
+        
         delete root;
         root = nullptr;
         return false;

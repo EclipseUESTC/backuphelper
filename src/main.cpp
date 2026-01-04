@@ -19,13 +19,15 @@
 
 #include "core/BackupEngine.hpp"
 #include "core/Filter.hpp"
+#include "core/RealTimeBackupManager.hpp"
+#include "core/TimerBackupManager.hpp"
 #include "utils/ConsoleLogger.hpp"
 #include "utils/FileSystem.hpp"
 
 // 配置结构体定义
 struct AppConfig {
-    std::string sourceDir = "/home/huang-nan/backup_test";
-    std::string backupDir = "/home/huang-nan/backup_dest";
+    std::string sourceDir = "S:/code/backuphelper/test_source";
+    std::string backupDir = "S:/code/backuphelper/test_backup";
     std::vector<std::string> excludedPaths;
     std::vector<std::string> includedExtensions;
     bool useFilters = false;
@@ -99,6 +101,8 @@ private:
     IUserInterface* ui;  // 使用原始指针避免循环依赖
     ConsoleLogger& logger;
     AppConfig config;
+    std::unique_ptr<RealTimeBackupManager> realTimeBackupManager;
+    std::unique_ptr<TimerBackupManager> timerBackupManager;
 
 public:
     ApplicationController(IUserInterface* ui, ConsoleLogger& logger)
@@ -194,6 +198,150 @@ public:
     ConsoleLogger& getLogger() {
         return logger;
     }
+    
+    // 实时备份相关方法
+    bool startRealTimeBackup() {
+        logger.info("Starting real-time backup...");
+        
+        // 检查是否已启动定时备份
+        if (timerBackupManager && timerBackupManager->isRunning()) {
+            logger.error("Cannot start real-time backup while timer backup is running.");
+            return false;
+        }
+        
+        // 初始化实时备份管理器
+        if (!realTimeBackupManager) {
+            realTimeBackupManager = std::make_unique<RealTimeBackupManager>(&logger);
+        }
+        
+        // 创建实时备份配置
+        RealTimeBackupConfig rtConfig;
+        rtConfig.sourceDir = config.sourceDir;
+        rtConfig.backupDir = config.backupDir;
+        rtConfig.filters = {}; // 使用空过滤器，或从配置中获取
+        rtConfig.compressEnabled = config.compressEnabled;
+        rtConfig.packageEnabled = config.packageEnabled;
+        rtConfig.packageFileName = config.packageFileName;
+        rtConfig.password = config.password;
+        rtConfig.debounceTimeMs = 5000; // 5秒防抖时间
+        
+        // 启动实时备份
+        bool success = realTimeBackupManager->start(rtConfig);
+        if (success) {
+            logger.info("Real-time backup started successfully.");
+        } else {
+            logger.error("Failed to start real-time backup.");
+        }
+        return success;
+    }
+    
+    void stopRealTimeBackup() {
+        if (realTimeBackupManager) {
+            realTimeBackupManager->stop();
+            logger.info("Real-time backup stopped.");
+        }
+    }
+    
+    bool isRealTimeBackupRunning() const {
+        return realTimeBackupManager && realTimeBackupManager->isRunning();
+    }
+    
+    // 定时备份相关方法
+    bool startTimerBackup(int intervalSeconds) {
+        logger.info("Starting timer backup...");
+        
+        // 检查是否已启动实时备份
+        if (realTimeBackupManager && realTimeBackupManager->isRunning()) {
+            logger.error("Cannot start timer backup while real-time backup is running.");
+            return false;
+        }
+        
+        // 初始化定时备份管理器
+        if (!timerBackupManager) {
+            timerBackupManager = std::make_unique<TimerBackupManager>(&logger);
+        }
+        
+        // 创建定时备份配置
+        TimerBackupConfig tbConfig;
+        tbConfig.sourceDir = config.sourceDir;
+        tbConfig.backupDir = config.backupDir;
+        tbConfig.filters = {}; // 使用空过滤器，或从配置中获取
+        tbConfig.compressEnabled = config.compressEnabled;
+        tbConfig.packageEnabled = config.packageEnabled;
+        tbConfig.packageFileName = config.packageFileName;
+        tbConfig.password = config.password;
+        tbConfig.intervalSeconds = intervalSeconds;
+        
+        // 启动定时备份
+        bool success = timerBackupManager->start(tbConfig);
+        if (success) {
+            logger.info("Timer backup started successfully with interval: " + std::to_string(intervalSeconds) + " seconds");
+        } else {
+            logger.error("Failed to start timer backup.");
+        }
+        return success;
+    }
+    
+    void stopTimerBackup() {
+        if (timerBackupManager) {
+            timerBackupManager->stop();
+            logger.info("Timer backup stopped.");
+        }
+    }
+    
+    void pauseTimerBackup() {
+        if (timerBackupManager) {
+            timerBackupManager->pause();
+        }
+    }
+    
+    void resumeTimerBackup() {
+        if (timerBackupManager) {
+            timerBackupManager->resume();
+        }
+    }
+    
+    bool isTimerBackupRunning() const {
+        return timerBackupManager && timerBackupManager->isRunning();
+    }
+    
+    bool isTimerBackupPaused() const {
+        return timerBackupManager && timerBackupManager->isPaused();
+    }
+    
+    void updateTimerBackupInterval(int seconds) {
+        if (timerBackupManager) {
+            timerBackupManager->setInterval(seconds);
+        }
+    }
+    
+    // 更新定时备份配置
+    void updateTimerBackupConfig() {
+        if (timerBackupManager && timerBackupManager->isRunning()) {
+            TimerBackupConfig tbConfig;
+            tbConfig.sourceDir = config.sourceDir;
+            tbConfig.backupDir = config.backupDir;
+            
+            // 创建过滤器，与executeBackup方法保持一致
+            std::vector<std::shared_ptr<Filter>> filters;
+            if (config.useFilters) {
+                auto pathFilter = std::make_shared<PathFilter>();
+                for (const auto& path : config.excludedPaths) {
+                    pathFilter->addExcludedPath(path);
+                }
+                filters.push_back(pathFilter);
+            }
+            tbConfig.filters = filters;
+            
+            tbConfig.compressEnabled = config.compressEnabled;
+            tbConfig.packageEnabled = config.packageEnabled;
+            tbConfig.packageFileName = config.packageFileName;
+            tbConfig.password = config.password;
+            tbConfig.intervalSeconds = timerBackupManager->getConfig().intervalSeconds; // 保留当前间隔
+            
+            timerBackupManager->updateConfig(tbConfig);
+        }
+    }
 };
 
 // 命令行界面实现 - 作为IUserInterface的具体实现
@@ -229,13 +377,13 @@ public:
                 system("clear");
             #endif
             displayMenu();
-            std::cout << "Please choose your operation [0-5]: ";
+            std::cout << "Please choose your operation [0-19]: ";
             
             // 输入验证
             while (!(std::cin >> choice)) {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "Invalid input, please enter a number [0-7]: ";
+                std::cout << "Invalid input, please enter a number [0-19]: ";
             }
             
             handleUserChoice(choice);
@@ -395,6 +543,8 @@ public:
             if (FileSystem::exists(newPath) || FileSystem::createDirectories(newPath)) {
                 config.sourceDir = newPath;
                 std::cout << "Source directory updated to: " << config.sourceDir << "\n";
+                // 更新运行中的备份配置
+                controller.updateTimerBackupConfig();
             } else {
                 std::cout << "Warning: Path does not exist and cannot be created: " << newPath << "\n";
                 std::cout << "Please check if you have permission to access this location.\n";
@@ -415,6 +565,8 @@ public:
             if (FileSystem::exists(newPath) || FileSystem::createDirectories(newPath)) {
                 config.backupDir = newPath;
                 std::cout << "Backup directory updated to: " << config.backupDir << "\n";
+                // 更新运行中的备份配置
+                controller.updateTimerBackupConfig();
             } else {
                 std::cout << "Warning: Path does not exist and cannot be created: " << newPath << "\n";
                 std::cout << "Please check if you have permission to access this location.\n";
@@ -487,6 +639,9 @@ public:
         config.compressEnabled = !config.compressEnabled;
         std::cout << "Compression status updated to: " << (config.compressEnabled ? "Enabled" : "Disabled") << "\n";
         
+        // 更新运行中的备份配置
+        controller.updateTimerBackupConfig();
+        
         waitForEnter();
     }
 
@@ -510,6 +665,9 @@ public:
                 std::cout << "Package file name updated to: " << config.packageFileName << "\n";
             }
         }
+        
+        // 更新运行中的备份配置
+        controller.updateTimerBackupConfig();
         
         waitForEnter();
     }
@@ -705,18 +863,23 @@ private:
         std::cout << "=== Backup Helper ===\n";
         std::cout << "[1] Perform Backup\n";
         std::cout << "[2] Perform Restore\n";
-        std::cout << "[3] Change Source Directory (Current: " << config.sourceDir << ")\n";
-        std::cout << "[4] Change Backup Directory (Current: " << config.backupDir << ")\n";
-        std::cout << "[5] Manage Filters (" << (config.useFilters ? "Enabled" : "Disabled") << ")\n";
-        std::cout << "[6] Toggle Compression (Current: " << (config.compressEnabled ? "Enabled" : "Disabled") << ")\n";
-        std::cout << "[7] Toggle File Packaging (Current: " << (config.packageEnabled ? "Enabled" : "Disabled") << ")\n";
-        std::cout << "[8] Set Encryption Password (Current: " << (config.password.empty() ? "Not Set" : "Set") << ")\n";
-        std::cout << "[9] Show Help\n";
-        std::cout << "[10] Reset Environment\n";
-        std::cout << "[11] Delete Source Files (Test)\n";
-        std::cout << "[12] Set Source to /home/huang-nan/backup_test\n";
-        std::cout << "[13] Set Source to /home/huang-nan/backup_source\n";
-        std::cout << "[14] Delete All Files in Backup Directory\n";
+        std::cout << "[3] Start Real-Time Backup (Current: " << (controller.isRealTimeBackupRunning() ? "Running" : "Stopped") << ")\n";
+        std::cout << "[4] Stop Real-Time Backup\n";
+        std::cout << "[5] Start Timer Backup\n";
+        std::cout << "[6] Stop Timer Backup (Current: " << (controller.isTimerBackupRunning() ? (controller.isTimerBackupPaused() ? "Paused" : "Running") : "Stopped") << ")\n";
+        std::cout << "[7] Pause/Resume Timer Backup\n";
+        std::cout << "[8] Change Source Directory (Current: " << config.sourceDir << ")\n";
+        std::cout << "[9] Change Backup Directory (Current: " << config.backupDir << ")\n";
+        std::cout << "[10] Manage Filters (" << (config.useFilters ? "Enabled" : "Disabled") << ")\n";
+        std::cout << "[11] Toggle Compression (Current: " << (config.compressEnabled ? "Enabled" : "Disabled") << ")\n";
+        std::cout << "[12] Toggle File Packaging (Current: " << (config.packageEnabled ? "Enabled" : "Disabled") << ")\n";
+        std::cout << "[13] Set Encryption Password (Current: " << (config.password.empty() ? "Not Set" : "Set") << ")\n";
+        std::cout << "[14] Show Help\n";
+        std::cout << "[15] Reset Environment\n";
+        std::cout << "[16] Delete Source Files (Test)\n";
+        std::cout << "[17] Set Source to /home/huang-nan/backup_test\n";
+        std::cout << "[18] Set Source to /home/huang-nan/backup_source\n";
+        std::cout << "[19] Delete All Files in Backup Directory\n";
         std::cout << "[0] Exit Program\n";
     }
 
@@ -730,33 +893,104 @@ private:
                 performRestore();
                 break;
             case 3:
-                setSourceDirectory();
+                {
+                    std::cout << "=== Start Real-Time Backup ===\n";
+                    if (controller.startRealTimeBackup()) {
+                        std::cout << "Real-time backup started successfully.\n";
+                        std::cout << "Monitoring directory: " << controller.getConfig().sourceDir << "\n";
+                    } else {
+                        std::cout << "Failed to start real-time backup.\n";
+                    }
+                    waitForEnter();
+                }
                 break;
             case 4:
-                setBackupDirectory();
+                {
+                    std::cout << "=== Stop Real-Time Backup ===\n";
+                    controller.stopRealTimeBackup();
+                    std::cout << "Real-time backup stopped.\n";
+                    waitForEnter();
+                }
                 break;
             case 5:
-                manageFilters();
+                {
+                    std::cout << "=== Start Timer Backup ===\n";
+                    std::cout << "Enter backup interval in seconds: ";
+                    int interval;
+                    std::cin >> interval;
+                    
+                    // 清空输入缓冲区中的换行符，避免影响定时器备份的输入检测
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    
+                    if (interval > 0) {
+                        if (controller.startTimerBackup(interval)) {
+                            std::cout << "Timer backup started with interval: " << interval << " seconds.\n";
+                        } else {
+                            std::cout << "Failed to start timer backup.\n";
+                        }
+                    } else {
+                        std::cout << "Invalid interval. Please enter a positive number.\n";
+                    }
+                    waitForEnter();
+                }
                 break;
             case 6:
-                setCompressEnabled();
+                {
+                    std::cout << "=== Stop Timer Backup ===\n";
+                    if (controller.isTimerBackupRunning()) {
+                        controller.stopTimerBackup();
+                        std::cout << "Timer backup stopped.\n";
+                    } else {
+                        std::cout << "Timer backup is not running.\n";
+                    }
+                    waitForEnter();
+                }
                 break;
             case 7:
-                setPackageEnabled();
+                {
+                    std::cout << "=== Pause/Resume Timer Backup ===\n";
+                    if (controller.isTimerBackupRunning()) {
+                        if (controller.isTimerBackupPaused()) {
+                            controller.resumeTimerBackup();
+                            std::cout << "Timer backup resumed.\n";
+                        } else {
+                            controller.pauseTimerBackup();
+                            std::cout << "Timer backup paused.\n";
+                        }
+                    } else {
+                        std::cout << "Timer backup is not running.\n";
+                    }
+                    waitForEnter();
+                }
                 break;
             case 8:
-                setEncryptionPassword();
+                setSourceDirectory();
                 break;
             case 9:
-                showHelp();
+                setBackupDirectory();
                 break;
             case 10:
-                performReset();
+                manageFilters();
                 break;
             case 11:
-                deleteSourceFiles();
+                setCompressEnabled();
                 break;
             case 12:
+                setPackageEnabled();
+                break;
+            case 13:
+                setEncryptionPassword();
+                break;
+            case 14:
+                showHelp();
+                break;
+            case 15:
+                performReset();
+                break;
+            case 16:
+                deleteSourceFiles();
+                break;
+            case 17:
                 {
                     AppConfig& config = controller.getConfig();
                     config.sourceDir = "/home/huang-nan/backup_test";
@@ -764,7 +998,7 @@ private:
                     waitForEnter();
                 }
                 break;
-            case 13:
+            case 18:
                 {
                     AppConfig& config = controller.getConfig();
                     config.sourceDir = "/home/huang-nan/backup_source";
@@ -772,7 +1006,7 @@ private:
                     waitForEnter();
                 }
                 break;
-            case 14:
+            case 19:
                 {
                     AppConfig& config = controller.getConfig();
                     std::cout << "Deleting all files in backup directory: " << config.backupDir << "\n";
@@ -786,6 +1020,9 @@ private:
                 break;
             case 0:
                 std::cout << "Thank you for using Backup Helper, goodbye!\n";
+                // 确保在退出前停止所有备份
+                controller.stopRealTimeBackup();
+                controller.stopTimerBackup();
                 break;
             default:
                 std::cout << "Invalid selection, please try again.\n";
@@ -847,6 +1084,9 @@ private:
         } else {
             std::cout << "Password set successfully.\n";
         }
+        
+        // 更新运行中的备份配置
+        controller.updateTimerBackupConfig();
         
         waitForEnter();
     }

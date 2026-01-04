@@ -5,17 +5,25 @@
 #include <filesystem>
 
 BackupTask::BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
-                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName, const std::string& pass) 
-    : sourcePath(source), backupPath(backup), status(TaskStatus::PENDING), logger(log), filters(filterList), 
-      compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName), password(pass) {}
+                      const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName, const std::string& pass, 
+                      std::atomic<bool>* interruptFlag) 
+  : sourcePath(source), backupPath(backup), status(TaskStatus::PENDING), logger(log), filters(filterList), 
+    compressEnabled(compress), packageEnabled(package), packageFileName(pkgFileName), password(pass), 
+    interrupted(interruptFlag) {}
 
 bool BackupTask::execute() {
     logger->info("Starting backup: " + sourcePath + " -> " + backupPath);
     status = TaskStatus::RUNNING;
     
+    // 检查是否被中断
+    if (isInterrupted()) {
+        logger->info("Backup interrupted.");
+        status = TaskStatus::CANCELLED;
+        return false;
+    }
+    
     if (!FileSystem::exists(sourcePath)) {
         logger->error("Source directory not found: " + sourcePath);
-        logger->error("Please check if the source directory path is correct.");
         status = TaskStatus::FAILED;
         return false;
     }
@@ -23,13 +31,11 @@ bool BackupTask::execute() {
     // 先确保顶级备份目录存在
     if (!FileSystem::createDirectories(backupPath)) {
         logger->error("Failed to create base backup directory: " + backupPath);
-        logger->error("Please check if you have permission to create directories at this location.");
         status = TaskStatus::FAILED;
         return false;
     }
     
     auto files = FileSystem::getAllFiles(sourcePath);
-    logger->info("Found " + std::to_string(files.size()) + " files to backup");
     
     // 应用过滤器
     std::vector<File> filteredFiles;
@@ -46,7 +52,6 @@ bool BackupTask::execute() {
         }
     }
     
-    logger->info("After filtering, " + std::to_string(filteredFiles.size()) + " files will be backed up");
     files = filteredFiles;
     
     if (files.empty()) {
@@ -54,19 +59,6 @@ bool BackupTask::execute() {
         status = TaskStatus::COMPLETED;
         return true;
     }
-    int regularCount = 0, symlinkCount = 0, dirCount = 0, otherCount = 0;
-    for (const auto& file : files) {
-        if (file.isRegularFile()) regularCount++;
-        else if (file.isSymbolicLink()) symlinkCount++;
-        else if (file.isDirectory()) dirCount++;
-        else otherCount++;
-    }
-    
-    logger->info("file types stats:");
-    logger->info("  Normal files: " + std::to_string(regularCount));
-    logger->info("  Symbolic link: " + std::to_string(symlinkCount));
-    logger->info("  Directories: " + std::to_string(dirCount));
-    logger->info("  Others: " + std::to_string(otherCount));
     int successCount = 0;
     uint64_t totalSize = 0;
     
@@ -74,6 +66,13 @@ bool BackupTask::execute() {
     std::vector<std::string> backedUpFiles;
     
     for (const auto& file : files) {
+        // 检查是否被中断
+        if (isInterrupted()) {
+            logger->info("Backup interrupted.");
+            status = TaskStatus::CANCELLED;
+            return false;
+        }
+        
         std::string relativePath = file.getRelativePath(std::filesystem::path(sourcePath)).string();
         std::string backupFile = (std::filesystem::path(backupPath) / relativePath).string();
         
@@ -229,6 +228,13 @@ bool BackupTask::execute() {
     // 如果启用了文件拼接功能，将所有备份文件拼接成一个包文件
     std::string finalPackagePath;
     if (packageEnabled) {
+        // 检查是否被中断
+        if (isInterrupted()) {
+            logger->info("Backup interrupted.");
+            status = TaskStatus::CANCELLED;
+            return false;
+        }
+        
         logger->info("Packaging backup files into a single file...");
         
         finalPackagePath = (std::filesystem::path(backupPath) / packageFileName).string();
@@ -263,6 +269,13 @@ bool BackupTask::execute() {
         
         // 如果提供了密码，则加密打包文件
         if (!password.empty()) {
+            // 检查是否被中断
+            if (isInterrupted()) {
+                logger->info("Backup interrupted.");
+                status = TaskStatus::CANCELLED;
+                return false;
+            }
+            
             std::string encryptedFile = finalPackagePath + ".enc";
             if (!Encryption::encryptFile(finalPackagePath, encryptedFile, password)) {
                 logger->error("Encryption failed: " + finalPackagePath);
@@ -300,6 +313,13 @@ bool BackupTask::execute() {
         // 如果不打包，则对每个文件进行加密
         if (!password.empty()) {
             for (auto& backupFile : backedUpFiles) {
+                // 检查是否被中断
+                if (isInterrupted()) {
+                    logger->info("Backup interrupted.");
+                    status = TaskStatus::CANCELLED;
+                    return false;
+                }
+                
                 std::string encryptedFile = backupFile + ".enc";
                 if (!Encryption::encryptFile(backupFile, encryptedFile, password)) {
                     logger->error("Encryption failed: " + backupFile);
@@ -346,6 +366,10 @@ bool BackupTask::execute() {
 
 TaskStatus BackupTask::getStatus() const {
     return status;
+}
+
+bool BackupTask::isInterrupted() const {
+    return interrupted && *interrupted;
 }
 
     // 删除空目录的辅助方法

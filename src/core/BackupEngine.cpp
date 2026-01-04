@@ -9,8 +9,9 @@ bool BackupEngine::backup(const std::string& sourceDir,
                           bool compressEnabled,
                           bool packageEnabled,
                           const std::string& packageFileName,
-                          const std::string& password) {
-    BackupTask task(sourceDir, backupPath, logger, filters, compressEnabled, packageEnabled, packageFileName, password);
+                          const std::string& password,
+                          std::atomic<bool>* interrupted) {
+    BackupTask task(sourceDir, backupPath, logger, filters, compressEnabled, packageEnabled, packageFileName, password, interrupted);
     return task.execute();
 }
 
@@ -20,7 +21,8 @@ bool BackupEngine::restore(const std::string& backupPath,
                             bool compressEnabled,
                             bool packageEnabled,
                             const std::string& packageFileName,
-                            const std::string& password) {
-    RestoreTask task(backupPath, restoreDir, logger, filters, compressEnabled, packageEnabled, packageFileName, password);
+                            const std::string& password,
+                            std::atomic<bool>* interrupted) {
+    RestoreTask task(backupPath, restoreDir, logger, filters, compressEnabled, packageEnabled, packageFileName, password, interrupted);
     return task.execute();
 }
