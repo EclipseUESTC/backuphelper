@@ -3,6 +3,7 @@
 #include "../../utils/FilePackager.hpp"
 #include "../../utils/Encryption.hpp"
 #include <filesystem>
+#include <atomic>
 
 BackupTask::BackupTask(const std::string& source, const std::string& backup, ILogger* log, 
                       const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, const std::string& pkgFileName, const std::string& pass, 
@@ -369,21 +370,24 @@ TaskStatus BackupTask::getStatus() const {
 }
 
 bool BackupTask::isInterrupted() const {
-    return interrupted && *interrupted;
+    if (interrupted != nullptr) {
+        return interrupted->load();
+    }
+    return false;
 }
 
-    // 删除空目录的辅助方法
-    void BackupTask::removeEmptyDirectories(const std::string& path) {
-        for (auto it = std::filesystem::directory_iterator(path); it != std::filesystem::directory_iterator();) {
-            if (std::filesystem::is_directory(*it) && !std::filesystem::is_symlink(*it)) {
-                std::string subdirPath = it->path().string();
-                ++it;
-                removeEmptyDirectories(subdirPath);
-                if (std::filesystem::is_empty(subdirPath)) {
-                    std::filesystem::remove(subdirPath);
-                }
-            } else {
-                ++it;
+// 删除空目录的辅助方法
+void BackupTask::removeEmptyDirectories(const std::string& path) {
+    for (auto it = std::filesystem::directory_iterator(path); it != std::filesystem::directory_iterator();) {
+        if (std::filesystem::is_directory(*it) && !std::filesystem::is_symlink(*it)) {
+            std::string subdirPath = it->path().string();
+            ++it;
+            removeEmptyDirectories(subdirPath);
+            if (std::filesystem::is_empty(subdirPath)) {
+                std::filesystem::remove(subdirPath);
             }
+        } else {
+            ++it;
         }
     }
+}

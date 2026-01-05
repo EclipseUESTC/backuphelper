@@ -141,12 +141,32 @@ bool FilePackager::packageFiles(const std::vector<File>& inputFiles, const std::
 
 // 兼容旧接口，内部转换为File对象
 bool FilePackager::packageFiles(const std::vector<std::string>& inputFiles, const std::string& outputFile) {
-    // Convert string paths to File objects
+    // Convert string paths to File objects and check if they exist
     std::vector<File> files;
     for (const auto& path : inputFiles) {
         files.emplace_back(path);
+        // 检查文件是否存在
+        if (!files.back().exists()) {
+            std::cerr << "Error: File not found: " << path << std::endl;
+            return false;
+        }
     }
     return packageFiles(files, outputFile);
+}
+
+// 兼容旧接口，内部转换为File对象，支持basePath
+bool FilePackager::packageFiles(const std::vector<std::string>& inputFiles, const std::string& outputFile, const std::string& basePath) {
+    // Convert string paths to File objects and check if they exist
+    std::vector<File> files;
+    for (const auto& path : inputFiles) {
+        files.emplace_back(path);
+        // 检查文件是否存在
+        if (!files.back().exists()) {
+            std::cerr << "Error: File not found: " << path << std::endl;
+            return false;
+        }
+    }
+    return packageFiles(files, outputFile, basePath);
 }
 
 // 将FileMetadata转换为File对象

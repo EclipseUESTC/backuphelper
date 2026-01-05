@@ -285,6 +285,107 @@ std::string SizeFilter::getFilterDescription() const {
     return desc;
 }
 
+// ExtensionFilter类的实现
+std::string ExtensionFilter::getFileExtension(const std::string& fileName) const {
+    size_t dotPos = fileName.find_last_of('.');
+    if (dotPos == std::string::npos || dotPos == fileName.length() - 1) {
+        return "";
+    }
+    return fileName.substr(dotPos + 1);
+}
+
+void ExtensionFilter::addIncludedExtension(const std::string& extension) {
+    // 统一扩展名格式：转换为小写，移除可能的前导点
+    std::string normalizedExt = extension;
+    if (!normalizedExt.empty() && normalizedExt[0] == '.') {
+        normalizedExt = normalizedExt.substr(1);
+    }
+    for (char& c : normalizedExt) {
+        c = std::tolower(c);
+    }
+    
+    // 检查扩展名是否已存在
+    if (!isExtensionIncluded(normalizedExt)) {
+        includedExtensions.push_back(normalizedExt);
+    }
+}
+
+bool ExtensionFilter::removeIncludedExtension(const std::string& extension) {
+    // 统一扩展名格式
+    std::string normalizedExt = extension;
+    if (!normalizedExt.empty() && normalizedExt[0] == '.') {
+        normalizedExt = normalizedExt.substr(1);
+    }
+    for (char& c : normalizedExt) {
+        c = std::tolower(c);
+    }
+    
+    auto it = std::find(includedExtensions.begin(), includedExtensions.end(), normalizedExt);
+    if (it != includedExtensions.end()) {
+        includedExtensions.erase(it);
+        return true;
+    }
+    return false;
+}
+
+bool ExtensionFilter::isExtensionIncluded(const std::string& extension) const {
+    // 统一扩展名格式
+    std::string normalizedExt = extension;
+    if (!normalizedExt.empty() && normalizedExt[0] == '.') {
+        normalizedExt = normalizedExt.substr(1);
+    }
+    for (char& c : normalizedExt) {
+        c = std::tolower(c);
+    }
+    
+    return std::find(includedExtensions.begin(), includedExtensions.end(), normalizedExt) != includedExtensions.end();
+}
+
+const std::vector<std::string>& ExtensionFilter::getIncludedExtensions() const {
+    return includedExtensions;
+}
+
+void ExtensionFilter::clearIncludedExtensions() {
+    includedExtensions.clear();
+}
+
+bool ExtensionFilter::match(const File& file) const {
+    // 如果没有设置包含的扩展名，则匹配所有文件
+    if (includedExtensions.empty()) {
+        return true;
+    }
+    
+    // 只对普通文件进行扩展名过滤
+    if (!file.isRegularFile()) {
+        return true;
+    }
+    
+    // 获取文件名
+    std::string fileName = file.getFilePath().filename().string();
+    // 获取扩展名
+    std::string extension = getFileExtension(fileName);
+    
+    // 检查扩展名是否被包含
+    return isExtensionIncluded(extension);
+}
+
+std::string ExtensionFilter::getFilterDescription() const {
+    std::string desc = "扩展名过滤器: ";
+    if (includedExtensions.empty()) {
+        desc += "无包含扩展名，匹配所有文件";
+    } else {
+        bool first = true;
+        for (const auto& ext : includedExtensions) {
+            if (!first) {
+                desc += ", ";
+            }
+            desc += "." + ext;
+            first = false;
+        }
+    }
+    return desc;
+}
+
 // NameFilter类的实现
 void NameFilter::addIncludePattern(const std::string& pattern) {
     try {

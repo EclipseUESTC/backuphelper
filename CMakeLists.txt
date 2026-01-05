@@ -47,6 +47,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 # 测试目标
+# FilterTests
 add_executable(FilterTests 
     src/FilterTests.cpp
     src/core/Filter.cpp 
@@ -58,23 +59,101 @@ add_executable(FilterTests
 )
 target_include_directories(FilterTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# 关键修复：使用正确的目标名称
-if(TARGET gtest)
-    target_link_libraries(FilterTests PRIVATE gtest gtest_main)
-    message(STATUS "链接到 gtest 和 gtest_main")
-elseif(TARGET GTest::gtest)
-    target_link_libraries(FilterTests PRIVATE GTest::gtest GTest::gtest_main)
-    message(STATUS "链接到 GTest::gtest 和 GTest::gtest_main")
-else()
-    # 手动设置包含目录作为最后手段
-    message(WARNING "未找到标准目标，尝试手动配置")
-    target_include_directories(FilterTests PRIVATE ${gtest_SOURCE_DIR}/googletest/include)
-    target_link_libraries(FilterTests PRIVATE ${gtest_BINARY_DIR}/libgtest.a)
-endif()
+# FileTests
+add_executable(FileTests 
+    src/FileTests.cpp
+    src/core/models/File.cpp 
+    src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
+)
+target_include_directories(FileTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# 注册测试
-add_test(NAME FilterTests COMMAND FilterTests)
-message(STATUS "已添加测试: FilterTests")
+# EncryptionTests
+add_executable(EncryptionTests 
+    src/EncryptionTests.cpp
+    src/utils/Encryption.cpp 
+    src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
+    src/core/models/File.cpp
+)
+target_include_directories(EncryptionTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# FilePackagerTests
+add_executable(FilePackagerTests 
+    src/FilePackagerTests.cpp
+    src/utils/FilePackager.cpp 
+    src/core/models/File.cpp 
+    src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
+)
+target_include_directories(FilePackagerTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# TaskTests (需要gmock)
+add_executable(TaskTests 
+    src/TaskTests.cpp
+    src/core/tasks/BackupTask.cpp 
+    src/core/tasks/RestoreTask.cpp 
+    src/core/Filter.cpp 
+    src/core/models/File.cpp 
+    src/utils/FilePackager.cpp 
+    src/utils/Encryption.cpp 
+    src/utils/ConsoleLogger.cpp 
+    src/utils/FileSystem.cpp
+    src/utils/HuffmanCompressor.cpp
+    src/utils/FileSystemMonitor.cpp
+)
+target_include_directories(TaskTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# 关键修复：使用正确的目标名称
+set(TEST_TARGETS FilterTests FileTests EncryptionTests FilePackagerTests TaskTests)
+
+foreach(test_target IN LISTS TEST_TARGETS)
+    if(TARGET gtest)
+        if(${test_target} STREQUAL "TaskTests")
+            target_link_libraries(${test_target} PRIVATE gtest gtest_main gmock gmock_main)
+            message(STATUS "链接 ${test_target} 到 gtest gtest_main gmock gmock_main")
+        else()
+            target_link_libraries(${test_target} PRIVATE gtest gtest_main)
+            message(STATUS "链接 ${test_target} 到 gtest gtest_main")
+        endif()
+    elseif(TARGET GTest::gtest)
+        if(${test_target} STREQUAL "TaskTests")
+            target_link_libraries(${test_target} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+            message(STATUS "链接 ${test_target} 到 GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main")
+        else()
+            target_link_libraries(${test_target} PRIVATE GTest::gtest GTest::gtest_main)
+            message(STATUS "链接 ${test_target} 到 GTest::gtest GTest::gtest_main")
+        endif()
+    else()
+        # 手动设置包含目录作为最后手段
+        message(WARNING "未找到标准目标，尝试手动配置 ${test_target}")
+        target_include_directories(${test_target} PRIVATE ${gtest_SOURCE_DIR}/googletest/include)
+        target_link_libraries(${test_target} PRIVATE ${gtest_BINARY_DIR}/libgtest.a)
+        if(${test_target} STREQUAL "TaskTests")
+            target_include_directories(${test_target} PRIVATE ${gtest_SOURCE_DIR}/googlemock/include)
+            target_link_libraries(${test_target} PRIVATE ${gtest_BINARY_DIR}/libgmock.a)
+        endif()
+    endif()
+    
+    # 为所有测试目标链接OpenSSL和Threads
+    find_package(OpenSSL REQUIRED)
+    if(OPENSSL_FOUND)
+        target_include_directories(${test_target} PRIVATE ${OPENSSL_INCLUDE_DIR})
+        target_link_libraries(${test_target} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+    endif()
+    
+    find_package(Threads REQUIRED)
+    target_link_libraries(${test_target} PRIVATE Threads::Threads)
+    
+    # 链接filesystem库（非MSVC平台需要）
+    if(NOT MSVC)
+        target_link_libraries(${test_target} PRIVATE stdc++fs)
+    endif()
+    
+    # 注册测试
+    add_test(NAME ${test_target} COMMAND ${test_target})
+    message(STATUS "已添加测试: ${test_target}")
+endforeach()
 
 # 主应用程序目标
 add_executable(BackupHelper

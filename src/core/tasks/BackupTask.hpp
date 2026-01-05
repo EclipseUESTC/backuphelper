@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <atomic>
 #include "../Types.hpp"
 #include "../Filter.hpp"
 #include "../../utils/ILogger.hpp"

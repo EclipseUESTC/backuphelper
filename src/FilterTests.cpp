@@ -327,28 +327,38 @@ TEST_F(TimeFilterTest, TestMatchFilesWithinTimeRange) {
     // 设置时间范围为过去1小时到现在
     filter.setTimeRange(oneHourAgo, now);
     
-    // 创建测试文件
-    std::ofstream(testDir / "recent.txt") << "test content";
-    File recentFile(testDir / "recent.txt");
+    // 测试1：最近的文件应该匹配
+    // 直接创建File对象，其时间会被设置为当前时间（在TimeFilter范围内）
+    File recentFile;
+    // 直接设置文件的修改时间为当前时间（确保在范围内）
+    recentFile.setLastModifiedTime(now);
     
     // 最近创建的文件应该匹配
     EXPECT_TRUE(filter.match(recentFile));
     
-    // 修改时间为过去2小时 - 使用兼容C++17的方式
-    std::ofstream oldFileStream((testDir / "old.txt").string());
-    oldFileStream << "old content";
-    oldFileStream.close();
-    
-    // 注意：在C++17中，我们无法直接将系统时间点转换为文件时间点
-    // 这里我们使用一个间接方法：先获取当前文件时间，然后减去相应的时长
-    auto nowFileTime = std::filesystem::file_time_type::clock::now();
-    auto twoHours = std::chrono::duration_cast<std::filesystem::file_time_type::duration>(std::chrono::hours(2));
-    auto oldFileTime = nowFileTime - twoHours;
-    std::filesystem::last_write_time(testDir / "old.txt", oldFileTime);
-    File oldFile(testDir / "old.txt");
+    // 测试2：旧文件不应该匹配
+    File oldFile;
+    // 设置文件的修改时间为过去2小时（不在范围内）
+    oldFile.setLastModifiedTime(twoHoursAgo);
     
     // 旧文件不应该匹配
     EXPECT_FALSE(filter.match(oldFile));
+    
+    // 测试3：边界情况 - 正好在开始时间
+    File boundaryStartFile;
+    boundaryStartFile.setLastModifiedTime(oneHourAgo);
+    EXPECT_TRUE(filter.match(boundaryStartFile));
+    
+    // 测试4：边界情况 - 正好在结束时间
+    File boundaryEndFile;
+    boundaryEndFile.setLastModifiedTime(now);
+    EXPECT_TRUE(filter.match(boundaryEndFile));
+    
+    // 测试5：超出边界 - 比开始时间早1秒
+    auto beforeBoundary = oneHourAgo - seconds(1);
+    File beforeBoundaryFile;
+    beforeBoundaryFile.setLastModifiedTime(beforeBoundary);
+    EXPECT_FALSE(filter.match(beforeBoundaryFile));
 }
 
 // 测试Filter在实际备份场景中的使用

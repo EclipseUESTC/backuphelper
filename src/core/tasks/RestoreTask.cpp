@@ -3,6 +3,7 @@
 #include "../../utils/FilePackager.hpp"
 #include "../../utils/Encryption.hpp"
 #include <filesystem>
+#include <atomic>
 
 RestoreTask::RestoreTask(const std::string& backup, const std::string& restore, ILogger* log, 
                        const std::vector<std::shared_ptr<Filter>>& filterList, bool compress, bool package, 
@@ -20,6 +21,13 @@ bool RestoreTask::execute() {
     if (isInterrupted()) {
         logger->info("Restore interrupted.");
         status = TaskStatus::CANCELLED;
+        return false;
+    }
+    
+    // 检查备份目录是否存在
+    if (!FileSystem::exists(backupPath)) {
+        logger->error("Backup directory not found: " + backupPath);
+        status = TaskStatus::FAILED;
         return false;
     }
     
@@ -503,5 +511,8 @@ TaskStatus RestoreTask::getStatus() const {
 }
 
 bool RestoreTask::isInterrupted() const {
-    return interrupted && *interrupted;
+    if (interrupted != nullptr) {
+        return interrupted->load();
+    }
+    return false;
 }

@@ -39,6 +39,8 @@ public:
     
     // 兼容旧接口，内部转换为File对象
     bool packageFiles(const std::vector<std::string>& inputFiles, const std::string& outputFile);
+    // 兼容旧接口，内部转换为File对象，支持basePath
+    bool packageFiles(const std::vector<std::string>& inputFiles, const std::string& outputFile, const std::string& basePath);
 
     // 解包单个文件到目录
     bool unpackFiles(const std::string& inputFile, const std::string& outputDir);

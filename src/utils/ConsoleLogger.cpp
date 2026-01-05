@@ -28,3 +28,28 @@ void ConsoleLogger::warn(const std::string& message) {
 void ConsoleLogger::debug(const std::string& message) {
     std::cout << "[" << getCurrentTime() << "] [DEBUG] " << message << std::endl;
 }
+
+void ConsoleLogger::setLogLevel(LogLevel level) {
+    currentLevel = level;
+}
+
+LogLevel ConsoleLogger::getLogLevel() const {
+    return currentLevel;
+}
+
+void ConsoleLogger::log(LogLevel level, const std::string& message) {
+    switch (level) {
+        case LogLevel::DEBUG:
+            std::cout << "[" << getCurrentTime() << "] [DEBUG] " << message << std::endl;
+            break;
+        case LogLevel::INFO:
+            std::cout << "[" << getCurrentTime() << "] [INFO] " << message << std::endl;
+            break;
+        case LogLevel::WARNING:
+            std::cout << "[" << getCurrentTime() << "] [WARN] " << message << std::endl;
+            break;
+        case LogLevel::ERROR_LEVEL:
+            std::cerr << "[" << getCurrentTime() << "] [ERROR] " << message << std::endl;
+            break;
+    }
+}

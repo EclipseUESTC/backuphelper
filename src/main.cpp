@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <sstream>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -28,9 +29,33 @@
 struct AppConfig {
     std::string sourceDir = "S:/code/backuphelper/test_source";
     std::string backupDir = "S:/code/backuphelper/test_backup";
-    std::vector<std::string> excludedPaths;
-    std::vector<std::string> includedExtensions;
+    
+    // 过滤相关配置
     bool useFilters = false;
+    
+    // PathFilter配置
+    std::vector<std::string> excludedPaths;
+    
+    // ExtensionFilter配置
+    std::vector<std::string> includedExtensions;
+    
+    // TypeFilter配置
+    std::vector<std::string> includedFileTypes;
+    
+    // TimeFilter配置
+    std::string timeRangeStart; // 格式：YYYY-MM-DD HH:MM:SS
+    std::string timeRangeEnd;   // 格式：YYYY-MM-DD HH:MM:SS
+    bool useTimeRange = false;
+    
+    // SizeFilter配置
+    uint64_t minFileSize = 0;
+    uint64_t maxFileSize = 0;
+    
+    // NameFilter配置
+    std::vector<std::string> includeNamePatterns;
+    std::vector<std::string> excludeNamePatterns;
+    
+    // 其他配置
     bool compressEnabled = false;  // 压缩开关，默认为开启
     bool packageEnabled = true;   // 拼接开关，默认为关闭
     std::string packageFileName = "backup.pkg"; // 拼接后的文件名
@@ -126,6 +151,17 @@ public:
         return config;
     }
 
+    // 辅助函数：解析时间字符串为system_clock::time_point
+    std::chrono::system_clock::time_point parseTimeString(const std::string& timeStr) {
+        std::tm tm = {};
+        std::istringstream ss(timeStr);
+        ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+        if (ss.fail()) {
+            throw std::invalid_argument("Invalid time format: " + timeStr + ". Expected format: YYYY-MM-DD HH:MM:SS");
+        }
+        return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    }
+    
     // 执行备份操作
     bool executeBackup() {
         logger.info("Backup operation started...");
@@ -135,15 +171,62 @@ public:
         // 创建过滤器
         std::vector<std::shared_ptr<Filter>> filters;
         if (config.useFilters) {
+            // 添加PathFilter
             auto pathFilter = std::make_shared<PathFilter>();
             for (const auto& path : config.excludedPaths) {
                 pathFilter->addExcludedPath(path);
             }
             filters.push_back(pathFilter);
             
-            // 如果有扩展名过滤，这里可以添加扩展名过滤器
-            // auto extensionFilter = std::make_shared<ExtensionFilter>(config.includedExtensions);
-            // filters.push_back(extensionFilter);
+            // 添加ExtensionFilter
+            auto extensionFilter = std::make_shared<ExtensionFilter>();
+            for (const auto& ext : config.includedExtensions) {
+                extensionFilter->addIncludedExtension(ext);
+            }
+            filters.push_back(extensionFilter);
+            
+            // 添加TypeFilter
+            auto typeFilter = std::make_shared<TypeFilter>();
+            for (const auto& type : config.includedFileTypes) {
+                typeFilter->addIncludedType(type);
+            }
+            filters.push_back(typeFilter);
+            
+            // 添加TimeFilter
+            auto timeFilter = std::make_shared<TimeFilter>();
+            if (config.useTimeRange && !config.timeRangeStart.empty() && !config.timeRangeEnd.empty()) {
+                try {
+                    auto startTime = parseTimeString(config.timeRangeStart);
+                    auto endTime = parseTimeString(config.timeRangeEnd);
+                    timeFilter->setTimeRange(startTime, endTime);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid time range: " + std::string(e.what()));
+                }
+            }
+            filters.push_back(timeFilter);
+            
+            // 添加SizeFilter
+            auto sizeFilter = std::make_shared<SizeFilter>();
+            sizeFilter->setSizeRange(config.minFileSize, config.maxFileSize);
+            filters.push_back(sizeFilter);
+            
+            // 添加NameFilter
+            auto nameFilter = std::make_shared<NameFilter>();
+            for (const auto& pattern : config.includeNamePatterns) {
+                try {
+                    nameFilter->addIncludePattern(pattern);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid include pattern: " + pattern + " - " + e.what());
+                }
+            }
+            for (const auto& pattern : config.excludeNamePatterns) {
+                try {
+                    nameFilter->addExcludePattern(pattern);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid exclude pattern: " + pattern + " - " + e.what());
+                }
+            }
+            filters.push_back(nameFilter);
         }
         
         bool success = BackupEngine::backup(config.sourceDir, config.backupDir, &logger, filters, config.compressEnabled, 
@@ -169,15 +252,62 @@ public:
         // 创建过滤器
         std::vector<std::shared_ptr<Filter>> filters;
         if (config.useFilters) {
+            // 添加PathFilter
             auto pathFilter = std::make_shared<PathFilter>();
             for (const auto& path : config.excludedPaths) {
                 pathFilter->addExcludedPath(path);
             }
             filters.push_back(pathFilter);
             
-            // 如果有扩展名过滤，这里可以添加扩展名过滤器
-            // auto extensionFilter = std::make_shared<ExtensionFilter>(config.includedExtensions);
-            // filters.push_back(extensionFilter);
+            // 添加ExtensionFilter
+            auto extensionFilter = std::make_shared<ExtensionFilter>();
+            for (const auto& ext : config.includedExtensions) {
+                extensionFilter->addIncludedExtension(ext);
+            }
+            filters.push_back(extensionFilter);
+            
+            // 添加TypeFilter
+            auto typeFilter = std::make_shared<TypeFilter>();
+            for (const auto& type : config.includedFileTypes) {
+                typeFilter->addIncludedType(type);
+            }
+            filters.push_back(typeFilter);
+            
+            // 添加TimeFilter
+            auto timeFilter = std::make_shared<TimeFilter>();
+            if (config.useTimeRange && !config.timeRangeStart.empty() && !config.timeRangeEnd.empty()) {
+                try {
+                    auto startTime = parseTimeString(config.timeRangeStart);
+                    auto endTime = parseTimeString(config.timeRangeEnd);
+                    timeFilter->setTimeRange(startTime, endTime);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid time range: " + std::string(e.what()));
+                }
+            }
+            filters.push_back(timeFilter);
+            
+            // 添加SizeFilter
+            auto sizeFilter = std::make_shared<SizeFilter>();
+            sizeFilter->setSizeRange(config.minFileSize, config.maxFileSize);
+            filters.push_back(sizeFilter);
+            
+            // 添加NameFilter
+            auto nameFilter = std::make_shared<NameFilter>();
+            for (const auto& pattern : config.includeNamePatterns) {
+                try {
+                    nameFilter->addIncludePattern(pattern);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid include pattern: " + pattern + " - " + e.what());
+                }
+            }
+            for (const auto& pattern : config.excludeNamePatterns) {
+                try {
+                    nameFilter->addExcludePattern(pattern);
+                } catch (const std::exception& e) {
+                    logger.error("Invalid exclude pattern: " + pattern + " - " + e.what());
+                }
+            }
+            filters.push_back(nameFilter);
         }
         
         bool success = BackupEngine::restore(config.backupDir, config.sourceDir, &logger, filters, config.compressEnabled, 
@@ -325,11 +455,62 @@ public:
             // 创建过滤器，与executeBackup方法保持一致
             std::vector<std::shared_ptr<Filter>> filters;
             if (config.useFilters) {
+                // 添加PathFilter
                 auto pathFilter = std::make_shared<PathFilter>();
                 for (const auto& path : config.excludedPaths) {
                     pathFilter->addExcludedPath(path);
                 }
                 filters.push_back(pathFilter);
+                
+                // 添加ExtensionFilter
+                auto extensionFilter = std::make_shared<ExtensionFilter>();
+                for (const auto& ext : config.includedExtensions) {
+                    extensionFilter->addIncludedExtension(ext);
+                }
+                filters.push_back(extensionFilter);
+                
+                // 添加TypeFilter
+                auto typeFilter = std::make_shared<TypeFilter>();
+                for (const auto& type : config.includedFileTypes) {
+                    typeFilter->addIncludedType(type);
+                }
+                filters.push_back(typeFilter);
+                
+                // 添加TimeFilter
+                auto timeFilter = std::make_shared<TimeFilter>();
+                if (config.useTimeRange && !config.timeRangeStart.empty() && !config.timeRangeEnd.empty()) {
+                    try {
+                        auto startTime = parseTimeString(config.timeRangeStart);
+                        auto endTime = parseTimeString(config.timeRangeEnd);
+                        timeFilter->setTimeRange(startTime, endTime);
+                    } catch (const std::exception& e) {
+                        logger.error("Invalid time range: " + std::string(e.what()));
+                    }
+                }
+                filters.push_back(timeFilter);
+                
+                // 添加SizeFilter
+                auto sizeFilter = std::make_shared<SizeFilter>();
+                sizeFilter->setSizeRange(config.minFileSize, config.maxFileSize);
+                filters.push_back(sizeFilter);
+                
+                // 添加NameFilter
+                auto nameFilter = std::make_shared<NameFilter>();
+                for (const auto& pattern : config.includeNamePatterns) {
+                    try {
+                        nameFilter->addIncludePattern(pattern);
+                    } catch (const std::exception& e) {
+                        logger.error("Invalid include pattern: " + pattern + " - " + e.what());
+                    }
+                }
+                for (const auto& pattern : config.excludeNamePatterns) {
+                    try {
+                        nameFilter->addExcludePattern(pattern);
+                    } catch (const std::exception& e) {
+                        logger.error("Invalid exclude pattern: " + pattern + " - " + e.what());
+                    }
+                }
+                filters.push_back(nameFilter);
             }
             tbConfig.filters = filters;
             
@@ -600,13 +781,17 @@ public:
             std::cout << "[1] Toggle Filter Status\n";
             std::cout << "[2] Manage Excluded Paths\n";
             std::cout << "[3] Manage Included Extensions\n";
+            std::cout << "[4] Manage Included File Types\n";
+            std::cout << "[5] Manage Time Range\n";
+            std::cout << "[6] Manage File Size Range\n";
+            std::cout << "[7] Manage Name Patterns\n";
             std::cout << "[0] Back to Main Menu\n";
-            std::cout << "Please choose an operation [0-3]: ";
+            std::cout << "Please choose an operation [0-7]: ";
             
             while (!(std::cin >> choice)) {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "Invalid input, please enter a number [0-3]: ";
+                std::cout << "Invalid input, please enter a number [0-7]: ";
             }
             
             switch (choice) {
@@ -620,6 +805,18 @@ public:
                     break;
                 case 3:
                     manageIncludedExtensions(config);
+                    break;
+                case 4:
+                    manageIncludedFileTypes(config);
+                    break;
+                case 5:
+                    manageTimeRange(config);
+                    break;
+                case 6:
+                    manageFileSizeRange(config);
+                    break;
+                case 7:
+                    manageNamePatterns(config);
                     break;
                 case 0:
                     break;
@@ -1089,6 +1286,449 @@ private:
         controller.updateTimerBackupConfig();
         
         waitForEnter();
+    }
+    
+    // 管理包含的文件类型
+    void manageIncludedFileTypes(AppConfig& config) {
+        int choice;
+        
+        do {
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
+            std::cout << "=== Included File Types Management ===\n\n";
+            if (config.includedFileTypes.empty()) {
+                std::cout << "No included file types defined (all types included).\n\n";
+            } else {
+                std::cout << "Current included file types:\n";
+                for (size_t i = 0; i < config.includedFileTypes.size(); ++i) {
+                    std::cout << "[" << (i + 1) << "] " << config.includedFileTypes[i] << "\n";
+                }
+                std::cout << "\n";
+            }
+            
+            std::cout << "Available file types: regular, directory, symlink, block, character, fifo, socket\n";
+            std::cout << "[1] Add included file type\n";
+            std::cout << "[2] Remove included file type\n";
+            std::cout << "[3] Clear all included file types\n";
+            std::cout << "[0] Back to Filter Menu\n";
+            std::cout << "Please choose an operation [0-3]: ";
+            
+            while (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input, please enter a number [0-3]: ";
+            }
+            
+            switch (choice) {
+                case 1: {
+                    std::string fileType;
+                    std::cout << "Enter file type to include: ";
+                    std::cin.ignore();
+                    std::getline(std::cin, fileType);
+                    
+                    // 检查文件类型是否有效
+                    std::vector<std::string> validTypes = {"regular", "directory", "symlink", "block", "character", "fifo", "socket"};
+                    bool isValid = std::find(validTypes.begin(), validTypes.end(), fileType) != validTypes.end();
+                    
+                    if (isValid) {
+                        // 检查是否已存在
+                        if (std::find(config.includedFileTypes.begin(), config.includedFileTypes.end(), fileType) == config.includedFileTypes.end()) {
+                            config.includedFileTypes.push_back(fileType);
+                            std::cout << "File type added to included list.\n";
+                        } else {
+                            std::cout << "File type already in included list.\n";
+                        }
+                    } else {
+                        std::cout << "Invalid file type. Please choose from the available types.\n";
+                    }
+                    waitForEnter();
+                    break;
+                }
+                case 2: {
+                    if (config.includedFileTypes.empty()) {
+                        std::cout << "No included file types to remove.\n";
+                        waitForEnter();
+                        break;
+                    }
+                    
+                    size_t index;
+                    std::cout << "Enter index of file type to remove (1-" << config.includedFileTypes.size() << "): ";
+                    while (!(std::cin >> index) || index < 1 || index > config.includedFileTypes.size()) {
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::cout << "Invalid input, please enter a number between 1 and " << config.includedFileTypes.size() << ": ";
+                    }
+                    
+                    config.includedFileTypes.erase(config.includedFileTypes.begin() + index - 1);
+                    std::cout << "File type removed from included list.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 3: {
+                    config.includedFileTypes.clear();
+                    std::cout << "All included file types cleared.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 0:
+                    break;
+                default:
+                    std::cout << "Invalid selection, please try again.\n";
+                    waitForEnter();
+            }
+        } while (choice != 0);
+    }
+    
+    // 管理时间范围
+    void manageTimeRange(AppConfig& config) {
+        int choice;
+        
+        do {
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
+            std::cout << "=== Time Range Management ===\n\n";
+            std::cout << "Time Range Status: " << (config.useTimeRange ? "Enabled" : "Disabled") << "\n";
+            if (config.useTimeRange) {
+                std::cout << "Current Start Time: " << (config.timeRangeStart.empty() ? "Not Set" : config.timeRangeStart) << "\n";
+                std::cout << "Current End Time: " << (config.timeRangeEnd.empty() ? "Not Set" : config.timeRangeEnd) << "\n";
+            }
+            std::cout << "\n";
+            std::cout << "Time format: YYYY-MM-DD HH:MM:SS\n";
+            std::cout << "Example: 2023-12-31 23:59:59\n\n";
+            
+            std::cout << "[1] Toggle Time Range\n";
+            std::cout << "[2] Set Start Time\n";
+            std::cout << "[3] Set End Time\n";
+            std::cout << "[0] Back to Filter Menu\n";
+            std::cout << "Please choose an operation [0-3]: ";
+            
+            while (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input, please enter a number [0-3]: ";
+            }
+            
+            switch (choice) {
+                case 1:
+                    config.useTimeRange = !config.useTimeRange;
+                    std::cout << "Time range " << (config.useTimeRange ? "enabled" : "disabled") << ".\n";
+                    waitForEnter();
+                    break;
+                case 2: {
+                    std::string startTime;
+                    std::cout << "Enter start time: ";
+                    std::cin.ignore();
+                    std::getline(std::cin, startTime);
+                    config.timeRangeStart = startTime;
+                    std::cout << "Start time set.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 3: {
+                    std::string endTime;
+                    std::cout << "Enter end time: ";
+                    std::cin.ignore();
+                    std::getline(std::cin, endTime);
+                    config.timeRangeEnd = endTime;
+                    std::cout << "End time set.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 0:
+                    break;
+                default:
+                    std::cout << "Invalid selection, please try again.\n";
+                    waitForEnter();
+            }
+        } while (choice != 0);
+    }
+    
+    // 管理文件大小范围
+    void manageFileSizeRange(AppConfig& config) {
+        int choice;
+        
+        do {
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
+            std::cout << "=== File Size Range Management ===\n\n";
+            std::cout << "Current Minimum Size: " << config.minFileSize << " bytes\n";
+            std::cout << "Current Maximum Size: " << config.maxFileSize << " bytes\n\n";
+            std::cout << "[1] Set Minimum Size\n";
+            std::cout << "[2] Set Maximum Size\n";
+            std::cout << "[3] Clear Size Range\n";
+            std::cout << "[0] Back to Filter Menu\n";
+            std::cout << "Please choose an operation [0-3]: ";
+            
+            while (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input, please enter a number [0-3]: ";
+            }
+            
+            switch (choice) {
+                case 1: {
+                    uint64_t minSize;
+                    std::cout << "Enter minimum file size in bytes: ";
+                    while (!(std::cin >> minSize)) {
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::cout << "Invalid input, please enter a positive number: ";
+                    }
+                    config.minFileSize = minSize;
+                    std::cout << "Minimum size set.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 2: {
+                    uint64_t maxSize;
+                    std::cout << "Enter maximum file size in bytes: ";
+                    while (!(std::cin >> maxSize)) {
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::cout << "Invalid input, please enter a positive number: ";
+                    }
+                    config.maxFileSize = maxSize;
+                    std::cout << "Maximum size set.\n";
+                    waitForEnter();
+                    break;
+                }
+                case 3:
+                    config.minFileSize = 0;
+                    config.maxFileSize = 0;
+                    std::cout << "Size range cleared.\n";
+                    waitForEnter();
+                    break;
+                case 0:
+                    break;
+                default:
+                    std::cout << "Invalid selection, please try again.\n";
+                    waitForEnter();
+            }
+        } while (choice != 0);
+    }
+    
+    // 管理名称模式
+    void manageNamePatterns(AppConfig& config) {
+        int choice;
+        
+        do {
+            // 跨平台清屏命令
+            #ifdef _WIN32
+                system("cls");
+            #else
+                system("clear");
+            #endif
+            std::cout << "=== Name Patterns Management ===\n\n";
+            
+            // 显示当前模式
+            std::cout << "Include Patterns:\n";
+            if (config.includeNamePatterns.empty()) {
+                std::cout << "  None\n";
+            } else {
+                for (size_t i = 0; i < config.includeNamePatterns.size(); ++i) {
+                    std::cout << "  [" << (i + 1) << "] " << config.includeNamePatterns[i] << "\n";
+                }
+            }
+            
+            std::cout << "\nExclude Patterns:\n";
+            if (config.excludeNamePatterns.empty()) {
+                std::cout << "  None\n";
+            } else {
+                for (size_t i = 0; i < config.excludeNamePatterns.size(); ++i) {
+                    std::cout << "  [" << (i + 1) << "] " << config.excludeNamePatterns[i] << "\n";
+                }
+            }
+            
+            std::cout << "\n";
+            std::cout << "[1] Manage Include Patterns\n";
+            std::cout << "[2] Manage Exclude Patterns\n";
+            std::cout << "[0] Back to Filter Menu\n";
+            std::cout << "Please choose an operation [0-2]: ";
+            
+            while (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input, please enter a number [0-2]: ";
+            }
+            
+            switch (choice) {
+                case 1: {
+                    // 管理包含模式
+                    int subChoice;
+                    do {
+                        // 跨平台清屏命令
+                        #ifdef _WIN32
+                            system("cls");
+                        #else
+                            system("clear");
+                        #endif
+                        std::cout << "=== Include Patterns Management ===\n\n";
+                        
+                        // 显示当前包含模式
+                        if (config.includeNamePatterns.empty()) {
+                            std::cout << "No include patterns defined.\n\n";
+                        } else {
+                            for (size_t i = 0; i < config.includeNamePatterns.size(); ++i) {
+                                std::cout << "[" << (i + 1) << "] " << config.includeNamePatterns[i] << "\n";
+                            }
+                            std::cout << "\n";
+                        }
+                        
+                        std::cout << "[1] Add Include Pattern\n";
+                        std::cout << "[2] Remove Include Pattern\n";
+                        std::cout << "[3] Clear All Include Patterns\n";
+                        std::cout << "[0] Back to Name Patterns Menu\n";
+                        std::cout << "Please choose an operation [0-3]: ";
+                        
+                        while (!(std::cin >> subChoice)) {
+                            std::cin.clear();
+                            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                            std::cout << "Invalid input, please enter a number [0-3]: ";
+                        }
+                        
+                        switch (subChoice) {
+                            case 1: {
+                                std::string pattern;
+                                std::cout << "Enter include pattern (regular expression): ";
+                                std::cin.ignore();
+                                std::getline(std::cin, pattern);
+                                config.includeNamePatterns.push_back(pattern);
+                                std::cout << "Include pattern added.\n";
+                                waitForEnter();
+                                break;
+                            }
+                            case 2: {
+                                if (config.includeNamePatterns.empty()) {
+                                    std::cout << "No include patterns to remove.\n";
+                                    waitForEnter();
+                                    break;
+                                }
+                                
+                                size_t index;
+                                std::cout << "Enter index of include pattern to remove (1-" << config.includeNamePatterns.size() << "): ";
+                                while (!(std::cin >> index) || index < 1 || index > config.includeNamePatterns.size()) {
+                                    std::cin.clear();
+                                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                    std::cout << "Invalid input, please enter a number between 1 and " << config.includeNamePatterns.size() << ": ";
+                                }
+                                
+                                config.includeNamePatterns.erase(config.includeNamePatterns.begin() + index - 1);
+                                std::cout << "Include pattern removed.\n";
+                                waitForEnter();
+                                break;
+                            }
+                            case 3:
+                                config.includeNamePatterns.clear();
+                                std::cout << "All include patterns cleared.\n";
+                                waitForEnter();
+                                break;
+                            case 0:
+                                break;
+                            default:
+                                std::cout << "Invalid selection, please try again.\n";
+                                waitForEnter();
+                        }
+                    } while (subChoice != 0);
+                    break;
+                }
+                case 2: {
+                    // 管理排除模式
+                    int subChoice;
+                    do {
+                        // 跨平台清屏命令
+                        #ifdef _WIN32
+                            system("cls");
+                        #else
+                            system("clear");
+                        #endif
+                        std::cout << "=== Exclude Patterns Management ===\n\n";
+                        
+                        // 显示当前排除模式
+                        if (config.excludeNamePatterns.empty()) {
+                            std::cout << "No exclude patterns defined.\n\n";
+                        } else {
+                            for (size_t i = 0; i < config.excludeNamePatterns.size(); ++i) {
+                                std::cout << "[" << (i + 1) << "] " << config.excludeNamePatterns[i] << "\n";
+                            }
+                            std::cout << "\n";
+                        }
+                        
+                        std::cout << "[1] Add Exclude Pattern\n";
+                        std::cout << "[2] Remove Exclude Pattern\n";
+                        std::cout << "[3] Clear All Exclude Patterns\n";
+                        std::cout << "[0] Back to Name Patterns Menu\n";
+                        std::cout << "Please choose an operation [0-3]: ";
+                        
+                        while (!(std::cin >> subChoice)) {
+                            std::cin.clear();
+                            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                            std::cout << "Invalid input, please enter a number [0-3]: ";
+                        }
+                        
+                        switch (subChoice) {
+                            case 1: {
+                                std::string pattern;
+                                std::cout << "Enter exclude pattern (regular expression): ";
+                                std::cin.ignore();
+                                std::getline(std::cin, pattern);
+                                config.excludeNamePatterns.push_back(pattern);
+                                std::cout << "Exclude pattern added.\n";
+                                waitForEnter();
+                                break;
+                            }
+                            case 2: {
+                                if (config.excludeNamePatterns.empty()) {
+                                    std::cout << "No exclude patterns to remove.\n";
+                                    waitForEnter();
+                                    break;
+                                }
+                                
+                                size_t index;
+                                std::cout << "Enter index of exclude pattern to remove (1-" << config.excludeNamePatterns.size() << "): ";
+                                while (!(std::cin >> index) || index < 1 || index > config.excludeNamePatterns.size()) {
+                                    std::cin.clear();
+                                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                    std::cout << "Invalid input, please enter a number between 1 and " << config.excludeNamePatterns.size() << ": ";
+                                }
+                                
+                                config.excludeNamePatterns.erase(config.excludeNamePatterns.begin() + index - 1);
+                                std::cout << "Exclude pattern removed.\n";
+                                waitForEnter();
+                                break;
+                            }
+                            case 3:
+                                config.excludeNamePatterns.clear();
+                                std::cout << "All exclude patterns cleared.\n";
+                                waitForEnter();
+                                break;
+                            case 0:
+                                break;
+                            default:
+                                std::cout << "Invalid selection, please try again.\n";
+                                waitForEnter();
+                        }
+                    } while (subChoice != 0);
+                    break;
+                }
+                case 0:
+                    break;
+                default:
+                    std::cout << "Invalid selection, please try again.\n";
+                    waitForEnter();
+            }
+        } while (choice != 0);
     }
     
     void deleteSourceFiles() override {

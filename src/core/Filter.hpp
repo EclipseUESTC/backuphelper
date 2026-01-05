@@ -93,6 +93,34 @@ public:
     std::string getFilterDescription() const override;
 };
 
+class ExtensionFilter: public Filter {
+private:
+    std::vector<std::string> includedExtensions;
+    
+    // 辅助方法：获取文件扩展名
+    std::string getFileExtension(const std::string& fileName) const;
+    
+public:
+    ExtensionFilter() : includedExtensions() {}
+    ~ExtensionFilter() = default;
+    
+    // 添加包含的扩展名
+    void addIncludedExtension(const std::string& extension);
+    // 移除包含的扩展名
+    bool removeIncludedExtension(const std::string& extension);
+    // 检查扩展名是否被包含
+    bool isExtensionIncluded(const std::string& extension) const;
+    // 获取所有包含的扩展名
+    const std::vector<std::string>& getIncludedExtensions() const;
+    // 清空所有包含的扩展名
+    void clearIncludedExtensions();
+    
+    // 匹配方法实现
+    bool match(const File& file) const override;
+    // 获取过滤器描述
+    std::string getFilterDescription() const override;
+};
+
 class NameFilter: public Filter {
 private:
     std::vector<std::regex> includePatterns;    // 包含的正则表达式模式

@@ -49,9 +49,14 @@ public:
     fs::file_type getFileType() const;
     
     // 时间戳访问
-    std::chrono::system_clock::time_point getCreationTime() const;
     std::chrono::system_clock::time_point getLastModifiedTime() const;
+    void setLastModifiedTime(std::chrono::system_clock::time_point time);
+    
+    std::chrono::system_clock::time_point getCreationTime() const;
+    void setCreationTime(std::chrono::system_clock::time_point time);
+    
     std::chrono::system_clock::time_point getLastAccessTime() const;
+    void setLastAccessTime(std::chrono::system_clock::time_point time);
     
     // 权限和属主访问
     unsigned int getPermissions() const;
