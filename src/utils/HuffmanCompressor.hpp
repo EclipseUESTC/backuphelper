@@ -13,20 +13,25 @@ struct HuffmanNode {
     HuffmanNode* left;      // 左子节点
     HuffmanNode* right;     // 右子节点
     bool isLeaf;            // 标记是否为叶节点
+    unsigned int id;        // 唯一ID，确保比较器的一致性
+    static unsigned int nextId; // 静态计数器，用于生成唯一ID
 
     // 叶节点构造函数
     HuffmanNode(unsigned char data, unsigned int freq) 
-        : data(data), freq(freq), left(nullptr), right(nullptr), isLeaf(true) {}
+        : data(data), freq(freq), left(nullptr), right(nullptr), isLeaf(true), id(nextId++) {}
     
     // 内部节点构造函数
     HuffmanNode(unsigned int freq, HuffmanNode* left, HuffmanNode* right) 
-        : data(0), freq(freq), left(left), right(right), isLeaf(false) {}
+        : data(0), freq(freq), left(left), right(right), isLeaf(false), id(nextId++) {}
     
     ~HuffmanNode() {
         delete left;
         delete right;
     }
 };
+
+// 初始化静态计数器
+unsigned int HuffmanNode::nextId = 0;
 
 // 比较器，用于优先队列，确保Huffman树构建唯一
 struct Compare {
@@ -44,10 +49,8 @@ struct Compare {
             if (l->isLeaf && r->isLeaf) {
                 return l->data > r->data;
             }
-            // 对于内部节点，按子节点字符值排序（确保唯一性）
-            unsigned char lChar = l->left->isLeaf ? l->left->data : (l->right->isLeaf ? l->right->data : 0);
-            unsigned char rChar = r->left->isLeaf ? r->left->data : (r->right->isLeaf ? r->right->data : 0);
-            return lChar > rChar;
+            // 对于内部节点，按唯一ID排序，确保Huffman树构建的一致性
+            return l->id > r->id;
         }
         return l->freq > r->freq;
     }
