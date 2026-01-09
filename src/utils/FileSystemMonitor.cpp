@@ -269,6 +269,8 @@
     #include <vector>
     #include <string>
     #include <unordered_map>
+    #include <cstring>  // 用于strerror函数
+    #include <errno.h>  // 用于errno变量
     
     class LinuxFileSystemMonitor : public FileSystemMonitor {
     private:
