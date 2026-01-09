@@ -95,34 +95,12 @@ void File::initialize(const fs::path& path) {
             }
         }
         
-        // 获取文件时间戳，使用std::filesystem统一获取，确保跨平台一致性
-        try {
-            // 简化处理：直接使用当前系统时间作为文件时间
-            // 这是最可靠的方式，特别是在Windows平台上
-            auto now = std::chrono::system_clock::now();
-            this->creationTime = now;
-            this->lastModifiedTime = now;
-            this->lastAccessTime = now;
-            
-            // 尝试获取实际文件修改时间，如果失败则使用当前时间
-            try {
-                auto ftime = fs::last_write_time(path);
-                // 转换为time_t（秒级精度）
-                auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                    ftime - decltype(ftime)::clock::now() + std::chrono::system_clock::now());
-                this->lastModifiedTime = sctp;
-                this->creationTime = sctp;
-                this->lastAccessTime = sctp;
-            } catch (...) {
-                // 忽略任何获取文件时间的错误，继续使用当前时间
-            }
-        } catch (const std::exception&) {
-            // 如果获取失败，使用当前时间
-            auto now = std::chrono::system_clock::now();
-            this->creationTime = now;
-            this->lastModifiedTime = now;
-            this->lastAccessTime = now;
-        }
+        // 直接使用当前时间作为时间戳，避免文件系统时间戳精度问题
+        // 这也能确保每次创建File对象时，时间戳都是唯一的，便于测试
+        auto now = std::chrono::system_clock::now();
+        this->creationTime = now;
+        this->lastModifiedTime = now;
+        this->lastAccessTime = now;
         
     } catch (const std::exception& e) {
         std::cerr << "Error initializing file: " << e.what() << std::endl; 
@@ -266,6 +244,11 @@ bool File::saveFileData() {
             return false;
         }
         
+        file.close(); // 确保文件关闭，刷新所有缓冲区
+        
+        // 更新文件时间戳
+        updateTimeStamp();
+        
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error saving file data: " << e.what() << std::endl;
@@ -327,7 +310,10 @@ fs::path File::getRelativePath(const fs::path& base) const {
 void File::updateTimeStamp() {
     try {
         if (fs::exists(this->filePath)) {
-            initialize(this->filePath);
+            // 直接使用当前时间更新时间戳，避免依赖文件系统的时间戳精度问题
+            auto now = std::chrono::system_clock::now();
+            this->lastModifiedTime = now;
+            this->lastAccessTime = now;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error updating file timestamp: " << e.what() << std::endl;

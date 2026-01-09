@@ -12,17 +12,43 @@ struct HuffmanNode {
     unsigned int freq;      // 字符出现频率
     HuffmanNode* left;      // 左子节点
     HuffmanNode* right;     // 右子节点
+    bool isLeaf;            // 标记是否为叶节点
 
-    HuffmanNode(unsigned char data, unsigned int freq) : data(data), freq(freq), left(nullptr), right(nullptr) {}
+    // 叶节点构造函数
+    HuffmanNode(unsigned char data, unsigned int freq) 
+        : data(data), freq(freq), left(nullptr), right(nullptr), isLeaf(true) {}
+    
+    // 内部节点构造函数
+    HuffmanNode(unsigned int freq, HuffmanNode* left, HuffmanNode* right) 
+        : data(0), freq(freq), left(left), right(right), isLeaf(false) {}
+    
     ~HuffmanNode() {
         delete left;
         delete right;
     }
 };
 
-// 比较器，用于优先队列
+// 比较器，用于优先队列，确保Huffman树构建唯一
 struct Compare {
     bool operator()(HuffmanNode* l, HuffmanNode* r) {
+        // 当频率相同时，按字符值排序，确保生成的Huffman树结构唯一
+        if (l->freq == r->freq) {
+            // 叶节点优先于内部节点
+            if (l->isLeaf && !r->isLeaf) {
+                return false; // 叶节点l优先级高，排在前面
+            }
+            if (!l->isLeaf && r->isLeaf) {
+                return true;  // 内部节点l优先级低，排在后面
+            }
+            // 对于叶节点，按字符值排序
+            if (l->isLeaf && r->isLeaf) {
+                return l->data > r->data;
+            }
+            // 对于内部节点，按子节点字符值排序（确保唯一性）
+            unsigned char lChar = l->left->isLeaf ? l->left->data : (l->right->isLeaf ? l->right->data : 0);
+            unsigned char rChar = r->left->isLeaf ? r->left->data : (r->right->isLeaf ? r->right->data : 0);
+            return lChar > rChar;
+        }
         return l->freq > r->freq;
     }
 };
@@ -42,20 +68,23 @@ private:
     // 统计字符频率（char版本，兼容旧代码）
     std::unordered_map<char, unsigned int> calculateFrequency(const std::string& data);
 
+    // 构建Huffman树
+    HuffmanNode* buildHuffmanTree(const std::unordered_map<unsigned char, unsigned int>& freqMap);
+    
     // 构建Huffman树（char版本，兼容旧代码）
-    HuffmanNode* buildHuffmanTree(const std::unordered_map<char, unsigned int>& freqMap);
+    HuffmanNode* buildHuffmanTreeChar(const std::unordered_map<char, unsigned int>& freqMap);
     
     // 构建Huffman树（unsigned char版本，用于二进制文件处理）
-    HuffmanNode* buildHuffmanTree(const std::unordered_map<unsigned char, unsigned int>& freqMap);
+    HuffmanNode* buildHuffmanTreeUnsignedChar(const std::unordered_map<unsigned char, unsigned int>& freqMap);
 
+    // 生成Huffman编码
+    void generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<unsigned char, std::string>& huffmanCodes);
+    
     // 生成Huffman编码（char版本，兼容旧代码）
-    void generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<char, std::string>& huffmanCodes);
+    void generateCodesChar(HuffmanNode* root, const std::string& code, std::unordered_map<char, std::string>& huffmanCodes);
     
     // 生成Huffman编码（unsigned char版本，用于二进制文件处理）
-    void generateCodes(HuffmanNode* root, const std::string& code, std::unordered_map<unsigned char, std::string>& huffmanCodes);
-
-    // 解码函数（char版本，兼容旧代码）
-    std::string decodeText(HuffmanNode* root, const std::string& encodedData);
+    void generateCodesUnsignedChar(HuffmanNode* root, const std::string& code, std::unordered_map<unsigned char, std::string>& huffmanCodes);
 
     // 将位串转换为字节序列
     std::vector<unsigned char> bitStringToBytes(const std::string& bitString);

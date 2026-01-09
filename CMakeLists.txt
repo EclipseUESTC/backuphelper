@@ -88,6 +88,34 @@ add_executable(FilePackagerTests
 )
 target_include_directories(FilePackagerTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
+# HuffmanCompressorTests
+add_executable(HuffmanCompressorTests 
+    src/HuffmanCompressorTests.cpp
+    src/utils/HuffmanCompressor.cpp
+    src/utils/FileSystem.cpp
+    src/core/models/File.cpp
+)
+target_include_directories(HuffmanCompressorTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# BackupManagerTests
+add_executable(BackupManagerTests 
+    src/BackupManagerTests.cpp
+    src/core/RealTimeBackupManager.cpp
+    src/core/TimerBackupManager.cpp
+    src/core/BackupEngine.cpp
+    src/core/models/File.cpp
+    src/utils/ConsoleLogger.cpp
+    src/utils/FileSystem.cpp
+    src/utils/FileSystemMonitor.cpp
+    src/utils/HuffmanCompressor.cpp
+    src/utils/FilePackager.cpp
+    src/utils/Encryption.cpp
+    src/core/tasks/BackupTask.cpp
+    src/core/tasks/RestoreTask.cpp
+    src/core/Filter.cpp
+)
+target_include_directories(BackupManagerTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
 # TaskTests (需要gmock)
 add_executable(TaskTests 
     src/TaskTests.cpp
@@ -105,7 +133,7 @@ add_executable(TaskTests
 target_include_directories(TaskTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 # 关键修复：使用正确的目标名称
-set(TEST_TARGETS FilterTests FileTests EncryptionTests FilePackagerTests TaskTests)
+set(TEST_TARGETS FilterTests FileTests EncryptionTests FilePackagerTests TaskTests HuffmanCompressorTests BackupManagerTests)
 
 foreach(test_target IN LISTS TEST_TARGETS)
     if(TARGET gtest)
