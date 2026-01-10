@@ -142,7 +142,7 @@ bool BackupTask::execute() {
                     // 目标是源目录中的文件，计算相对路径
                     std::string relativeTarget = FileSystem::getRelativePath(absoluteTargetPath.string(), sourcePath);
                     // 检查目标文件是否是普通文件，如果是，并且启用了压缩，那么需要添加.huff扩展名
-                    std::filesystem::path targetFilePath = sourcePath + "/" + relativeTarget;
+                    std::filesystem::path targetFilePath = sourcePath / relativeTarget;
                     if (std::filesystem::is_regular_file(targetFilePath, ec)) {
                         // 目标是普通文件，需要检查是否需要添加.huff扩展名和.enc扩展名
                         finalSymlinkTarget = relativeTarget;
@@ -165,42 +165,47 @@ bool BackupTask::execute() {
                     finalSymlinkTarget = absoluteTargetPath.string();
                 }
             } else {
-                // 目标是相对路径，检查目标是否是普通文件
-                std::filesystem::path symlinkParent = file.getFilePath().parent_path();
-                std::filesystem::path targetFilePath = symlinkParent / originalSymlinkTarget;
-                if (std::filesystem::is_regular_file(targetFilePath, ec)) {
-                    // 目标是普通文件，需要添加.huff扩展名和.enc扩展名
-                    finalSymlinkTarget = originalSymlinkTarget.string();
-                    
-                    // 如果启用了压缩，添加.huff扩展名
-                    if (compressEnabled) {
-                        finalSymlinkTarget += ".huff";
-                    }
-                    
-                    // 如果启用了加密，添加.enc扩展名
-                    if (!password.empty()) {
-                        finalSymlinkTarget += ".enc";
-                    }
-                } else {
-                    // 目标不是普通文件，直接使用相对路径
-                    finalSymlinkTarget = originalSymlinkTarget.string();
-                }
+                // 目标是相对路径，直接使用原始相对路径
+                // 不添加任何扩展名，因为相对路径可能指向任何类型的文件
+                finalSymlinkTarget = originalSymlinkTarget.string();
             }
             
             // 现在创建符号链接，使用修改后的目标路径
             std::filesystem::path symlinkDestPath(backupFile);
-            // 直接创建或更新符号链接，不删除已存在的文件
-            // 这样当软链接和目标文件同时存在时，软链接会优先被创建，而真实文件会在之后被处理
-            // 但要确保真实文件的处理不会覆盖软链接
-            // 由于我们已经修改了文件排序，软链接会先被处理，然后是真实文件
-            // 所以这里可以安全地创建符号链接，不需要删除已存在的文件
-            std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
-            // 如果创建失败，检查错误码
-            if (ec && ec.value() != static_cast<int>(std::errc::file_exists)) {
-                // 只有当错误不是文件已存在时，才返回失败
-                logger->error("Failed to create symlink: " + backupFile);
-                status = TaskStatus::FAILED;
-                return false;
+            // 检查目标是否已存在
+            if (std::filesystem::exists(symlinkDestPath, ec)) {
+                // 如果目标已存在，检查它是否是符号链接
+                if (std::filesystem::is_symlink(symlinkDestPath, ec)) {
+                    // 如果是符号链接，先删除旧的符号链接
+                    std::filesystem::remove(symlinkDestPath, ec);
+                    if (ec) {
+                        logger->error("Failed to remove existing symlink: " + backupFile);
+                        status = TaskStatus::FAILED;
+                        return false;
+                    }
+                    // 创建新的符号链接
+                    std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
+                    if (ec) {
+                        logger->error("Failed to create symlink: " + backupFile);
+                        status = TaskStatus::FAILED;
+                        return false;
+                    }
+                } else {
+                    // 如果目标已存在且不是符号链接，记录警告并跳过
+                    logger->warn("Symbolic link target already exists as non-symlink: " + backupFile);
+                    // 跳过创建符号链接，保留已存在的文件
+                    success = true;
+                    finalBackupFile = backupFile;
+                    continue;
+                }
+            } else {
+                // 目标不存在，直接创建符号链接
+                std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
+                if (ec) {
+                    logger->error("Failed to create symlink: " + backupFile);
+                    status = TaskStatus::FAILED;
+                    return false;
+                }
             }
             
             // 复制符号链接的元数据

@@ -288,10 +288,7 @@ std::string FileSystem::getRelativePath(const std::string& path, const std::stri
     try {
         fs::path p(path);
         fs::path b(base);
-        // 确保 base 是目录（末尾带 /）
-        if (!b.has_filename()) {
-            b = b.parent_path();
-        }
+        // 直接使用base作为基准目录，不做任何修改
         fs::path relative = fs::relative(p, b);
         return relative.string();
     } catch (const fs::filesystem_error&) {
