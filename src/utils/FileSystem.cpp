@@ -72,55 +72,41 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     }
     
     // 关键：先检查是否是符号链接
-        if (fs::is_symlink(sourcePath)) {
-            // 读取符号链接目标
-            fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
-            if (ec) {
-                return false;
-            }
-            
-            // 无论目标文件是否存在，都尝试创建符号链接
-            // 但首先检查目标文件是否是符号链接，如果是则替换
-            if (fs::exists(destPath, ec) && fs::is_symlink(destPath, ec)) {
+    if (fs::is_symlink(sourcePath)) {
+        // 读取符号链接目标
+        fs::path symlinkTarget = fs::read_symlink(sourcePath, ec);
+        if (ec) {
+            return false;
+        }
+        
+        // 无论目标文件是否存在，都尝试创建符号链接
+        // 但首先检查目标文件是否是符号链接，如果是则替换
+        if (fs::exists(destPath, ec)) {
+            if (fs::is_symlink(destPath, ec)) {
                 fs::remove(destPath, ec);
                 if (ec) {
                     return false;
                 }
-            }
-            
-            // 创建符号链接，正确计算相对路径
-            fs::path relativeTarget;
-            if (symlinkTarget.is_absolute()) {
-                relativeTarget = symlinkTarget;
             } else {
-                relativeTarget = symlinkTarget;
+                // 目标文件已存在且不是符号链接，返回失败
+                return false;
             }
-            
-            // 尝试创建符号链接
-            bool symlinkCreated = false;
-            fs::create_symlink(relativeTarget, destPath, ec);
-            if (ec) {
-                // 如果创建失败，检查是否是因为目标文件已经存在
-                if (ec.value() == static_cast<int>(std::errc::file_exists)) {
-                    // 目标文件已经存在，并且不是符号链接
-                    return true;
-                } else {
-                    // 其他错误，返回失败
-                    return false;
-                }
-            } else {
-                symlinkCreated = true;
-            }
-        
-        // 只有在符号链接成功创建后，才复制元数据
-        if (symlinkCreated) {
-            // 复制符号链接的元数据（权限、时间戳等）
-            fs::permissions(destPath, fs::status(sourcePath).permissions(), ec);
-            
-            // 复制符号链接的时间戳
-            std::error_code timeEc;
-            fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
         }
+        
+        // 创建符号链接，保持原始目标路径
+        // 对于相对路径，直接使用原始相对路径
+        // 对于绝对路径，保持绝对路径
+        fs::create_symlink(symlinkTarget, destPath, ec);
+        if (ec) {
+            return false;
+        }
+        
+        // 复制符号链接的元数据（权限、时间戳等）
+        fs::permissions(destPath, fs::symlink_status(sourcePath).permissions(), ec);
+        
+        // 复制符号链接的时间戳
+        std::error_code timeEc;
+        fs::last_write_time(destPath, fs::last_write_time(sourcePath, timeEc), timeEc);
         
         return true;
     }

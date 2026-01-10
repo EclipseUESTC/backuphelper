@@ -110,94 +110,10 @@ bool BackupTask::execute() {
             }
         } else if (file.isSymbolicLink()) {
             // 处理符号链接文件
-            // 首先读取符号链接的原始目标
-            std::error_code ec;
-            std::filesystem::path originalSymlinkTarget = std::filesystem::read_symlink(file.getFilePath(), ec);
-            if (ec) {
-                logger->error("Failed to read symlink target: " + file.getFilePath().string());
-                status = TaskStatus::FAILED;
-                return false;
-            }
-            
-            // 计算符号链接在源目录中的绝对目标路径
-            std::filesystem::path sourceDirPath(sourcePath);
-            std::filesystem::path absoluteTargetPath;
-            if (originalSymlinkTarget.is_absolute()) {
-                absoluteTargetPath = originalSymlinkTarget;
-            } else {
-                // 计算符号链接的父目录，然后与目标路径结合
-                std::filesystem::path symlinkParent = file.getFilePath().parent_path();
-                absoluteTargetPath = std::filesystem::canonical(symlinkParent / originalSymlinkTarget, ec);
-                if (ec) {
-                    // 如果无法获取绝对路径，使用相对路径
-                    absoluteTargetPath = originalSymlinkTarget;
-                }
-            }
-            
-            // 计算符号链接在备份目录中的目标路径
-            std::string finalSymlinkTarget;
-            if (absoluteTargetPath.is_absolute()) {
-                // 如果符号链接目标是绝对路径，检查它是否指向源目录中的文件
-                if (absoluteTargetPath.string().find(sourcePath) == 0) {
-                    // 目标是源目录中的文件，计算相对路径
-                    std::string relativeTarget = FileSystem::getRelativePath(absoluteTargetPath.string(), sourcePath);
-                    // 软链接指向的目标文件名应该是原始文件名，不需要添加压缩或加密扩展名
-                    // 因为在还原时会自动处理这些扩展名
-                    finalSymlinkTarget = relativeTarget;
-                } else {
-                    // 目标是外部文件，保持绝对路径
-                    finalSymlinkTarget = absoluteTargetPath.string();
-                }
-            } else {
-                // 目标是相对路径，直接使用原始相对路径
-                // 不需要添加任何扩展名，因为软链接指向的是原始文件名
-                finalSymlinkTarget = originalSymlinkTarget.string();
-            }
-            
-            // 现在创建符号链接，使用修改后的目标路径
-            std::filesystem::path symlinkDestPath(backupFile);
-            // 检查目标是否已存在
-            if (std::filesystem::exists(symlinkDestPath, ec)) {
-                // 如果目标已存在，检查它是否是符号链接
-                if (std::filesystem::is_symlink(symlinkDestPath, ec)) {
-                    // 如果是符号链接，先删除旧的符号链接
-                    std::filesystem::remove(symlinkDestPath, ec);
-                    if (ec) {
-                        logger->error("Failed to remove existing symlink: " + backupFile);
-                        status = TaskStatus::FAILED;
-                        return false;
-                    }
-                    // 创建新的符号链接
-                    std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
-                    if (ec) {
-                        logger->error("Failed to create symlink: " + backupFile);
-                        status = TaskStatus::FAILED;
-                        return false;
-                    }
-                } else {
-                    // 如果目标已存在且不是符号链接，记录警告并跳过
-                    logger->warn("Symbolic link target already exists as non-symlink: " + backupFile);
-                    // 跳过创建符号链接，保留已存在的文件
-                    success = true;
-                    finalBackupFile = backupFile;
-                    continue;
-                }
-            } else {
-                // 目标不存在，直接创建符号链接
-                std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
-                if (ec) {
-                    logger->error("Failed to create symlink: " + backupFile);
-                    status = TaskStatus::FAILED;
-                    return false;
-                }
-            }
-            
-            // 复制符号链接的元数据
-            std::filesystem::permissions(symlinkDestPath, std::filesystem::status(file.getFilePath()).permissions(), ec);
-            std::filesystem::last_write_time(symlinkDestPath, std::filesystem::last_write_time(file.getFilePath(), ec), ec);
-            
-            success = true;
+            // 符号链接需要被打包，所以直接复制到备份目录
+            // 但不会添加到打包文件列表中，因为符号链接的处理逻辑在FilePackager中
             finalBackupFile = backupFile;
+            success = FileSystem::copyFile(file.getFilePath().string(), backupFile);
         } else {
             // 对非普通文件和非符号链接文件（目录、设备文件等）直接复制，不压缩
             finalBackupFile = backupFile;
@@ -210,11 +126,9 @@ bool BackupTask::execute() {
             return false;
         }
         
-        // 将备份后的实际文件路径添加到列表中，但符号链接除外
-        // 符号链接不需要打包或加密，保持原样
-        if (!file.isSymbolicLink()) {
-            backedUpFiles.push_back(finalBackupFile);
-        }
+        // 将备份后的实际文件路径添加到列表中，包括符号链接
+        // 符号链接需要被打包，FilePackager会处理符号链接的特殊逻辑
+        backedUpFiles.push_back(finalBackupFile);
         
         successCount++;
         totalSize += file.getFileSize();
