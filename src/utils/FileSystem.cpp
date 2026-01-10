@@ -218,6 +218,53 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
             files.emplace_back(entry.path());
         }
         
+        // 收集符号链接指向的文件和目录
+        // 创建一个临时集合来存储已处理的文件路径，避免重复
+        std::set<fs::path> processedPaths;
+        for (const auto& file : files) {
+            processedPaths.insert(file.getFilePath());
+        }
+        
+        // 遍历所有文件，检查符号链接指向的文件是否已被收集
+        for (const auto& file : files) {
+            if (file.isSymbolicLink()) {
+                // 读取符号链接目标
+                fs::path symlinkTarget = fs::read_symlink(file.getFilePath(), ec);
+                if (!ec) {
+                    // 计算符号链接目标的完整路径
+                    fs::path fullTargetPath;
+                    if (symlinkTarget.is_absolute()) {
+                        fullTargetPath = symlinkTarget;
+                    } else {
+                        fullTargetPath = file.getFilePath().parent_path() / symlinkTarget;
+                    }
+                    
+                    // 检查目标是否存在，并且是源目录中的文件
+                    if (fs::exists(fullTargetPath) && 
+                        fullTargetPath.string().find(directory) == 0 && 
+                        processedPaths.find(fullTargetPath) == processedPaths.end()) {
+                        // 将目标文件添加到结果中
+                        files.emplace_back(fullTargetPath);
+                        processedPaths.insert(fullTargetPath);
+                        
+                        // 如果目标是目录，递归收集其内容
+                        if (fs::is_directory(fullTargetPath, ec) && !ec) {
+                            for (const auto& entry : fs::recursive_directory_iterator(
+                                     fullTargetPath, 
+                                     fs::directory_options::skip_permission_denied | fs::directory_options::follow_directory_symlink, 
+                                     ec)) {
+                                if (ec) break;
+                                if (processedPaths.find(entry.path()) == processedPaths.end()) {
+                                    files.emplace_back(entry.path());
+                                    processedPaths.insert(entry.path());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         // 收集空目录
         std::function<void(const fs::path&)> collectEmptyDirs = [&](const fs::path& dirPath) {
             for (const auto& entry : fs::directory_iterator(dirPath, ec)) {
@@ -232,6 +279,7 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
                     }
                     if (!exists) {
                         files.emplace_back(entry.path());
+                        processedPaths.insert(entry.path());
                     }
                     collectEmptyDirs(entry.path());
                 }
