@@ -141,99 +141,17 @@ bool BackupTask::execute() {
                 if (absoluteTargetPath.string().find(sourcePath) == 0) {
                     // 目标是源目录中的文件，计算相对路径
                     std::string relativeTarget = FileSystem::getRelativePath(absoluteTargetPath.string(), sourcePath);
-                    // 检查目标文件是否是普通文件，如果是，并且启用了压缩，那么需要添加.huff扩展名
-                    std::filesystem::path targetFilePath = std::filesystem::path(sourcePath) / relativeTarget;
-                    if (std::filesystem::is_regular_file(targetFilePath, ec)) {
-                        // 目标是普通文件，需要检查是否需要添加.huff扩展名和.enc扩展名
-                        finalSymlinkTarget = relativeTarget;
-                        
-                        // 如果启用了压缩，添加.huff扩展名
-                        if (compressEnabled) {
-                            finalSymlinkTarget += ".huff";
-                        }
-                        
-                        // 如果启用了加密，添加.enc扩展名
-                        if (!password.empty()) {
-                            finalSymlinkTarget += ".enc";
-                        }
-                    } else {
-                        // 目标不是普通文件，直接使用相对路径
-                        finalSymlinkTarget = relativeTarget;
-                    }
+                    // 软链接指向的目标文件名应该是原始文件名，不需要添加压缩或加密扩展名
+                    // 因为在还原时会自动处理这些扩展名
+                    finalSymlinkTarget = relativeTarget;
                 } else {
                     // 目标是外部文件，保持绝对路径
                     finalSymlinkTarget = absoluteTargetPath.string();
                 }
             } else {
-                // 目标是相对路径，计算它相对于符号链接的路径
-                // 首先获取符号链接的父目录
-                std::filesystem::path symlinkParent = file.getFilePath().parent_path();
-                // 计算目标文件的绝对路径
-                std::filesystem::path targetAbsolutePath = std::filesystem::canonical(symlinkParent / originalSymlinkTarget, ec);
-                if (!ec) {
-                    // 检查目标是否在源目录中
-                    if (targetAbsolutePath.string().find(sourcePath) == 0) {
-                        // 目标是源目录中的文件，计算相对路径
-                        std::string relativeTarget = FileSystem::getRelativePath(targetAbsolutePath.string(), sourcePath);
-                        // 检查目标文件是否是普通文件
-                        if (std::filesystem::is_regular_file(targetAbsolutePath, ec)) {
-                            // 目标是普通文件，需要检查是否需要添加.huff扩展名和.enc扩展名
-                            finalSymlinkTarget = relativeTarget;
-                            
-                            // 如果启用了压缩，添加.huff扩展名
-                            if (compressEnabled) {
-                                finalSymlinkTarget += ".huff";
-                            }
-                            
-                            // 如果启用了加密，添加.enc扩展名
-                            if (!password.empty()) {
-                                finalSymlinkTarget += ".enc";
-                            }
-                        } else {
-                            // 目标不是普通文件，直接使用相对路径
-                            finalSymlinkTarget = relativeTarget;
-                        }
-                    } else {
-                        // 目标是外部文件，保持原始相对路径
-                        finalSymlinkTarget = originalSymlinkTarget.string();
-                    }
-                } else {
-                    // 无法获取绝对路径，尝试直接处理相对路径
-                    // 检查相对路径是否指向同一目录下的文件
-                    std::filesystem::path sameDirTarget = originalSymlinkTarget;
-                    if (sameDirTarget.has_filename()) {
-                        // 目标是同一目录下的文件，计算其在源目录中的完整路径
-                        std::filesystem::path fullTargetPath = symlinkParent / sameDirTarget;
-                        if (fullTargetPath.string().find(sourcePath) == 0) {
-                            // 目标在源目录中，计算相对路径
-                            std::string relativeTarget = FileSystem::getRelativePath(fullTargetPath.string(), sourcePath);
-                            // 检查目标是否是普通文件
-                            if (std::filesystem::is_regular_file(fullTargetPath, ec)) {
-                                // 目标是普通文件，需要添加相应的扩展名
-                                finalSymlinkTarget = sameDirTarget.filename().string();
-                                
-                                // 如果启用了压缩，添加.huff扩展名
-                                if (compressEnabled) {
-                                    finalSymlinkTarget += ".huff";
-                                }
-                                
-                                // 如果启用了加密，添加.enc扩展名
-                                if (!password.empty()) {
-                                    finalSymlinkTarget += ".enc";
-                                }
-                            } else {
-                                // 目标不是普通文件，直接使用原始相对路径
-                                finalSymlinkTarget = originalSymlinkTarget.string();
-                            }
-                        } else {
-                            // 目标不在源目录中，保持原始相对路径
-                            finalSymlinkTarget = originalSymlinkTarget.string();
-                        }
-                    } else {
-                        // 无法处理的相对路径，保持原样
-                        finalSymlinkTarget = originalSymlinkTarget.string();
-                    }
-                }
+                // 目标是相对路径，直接使用原始相对路径
+                // 不需要添加任何扩展名，因为软链接指向的是原始文件名
+                finalSymlinkTarget = originalSymlinkTarget.string();
             }
             
             // 现在创建符号链接，使用修改后的目标路径

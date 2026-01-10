@@ -269,19 +269,10 @@ bool RestoreTask::execute() {
                             return false;
                         }
                         
-                        // 处理符号链接目标，去掉.enc和.huff扩展名
+                        // 处理符号链接目标，保持原始文件名
+                        // 不需要去掉.enc和.huff扩展名，因为备份时已经不添加这些扩展名了
                         std::string symlinkTargetStr = originalSymlinkTarget.string();
                         std::string finalSymlinkTarget = symlinkTargetStr;
-                        
-                        // 如果符号链接目标带有.enc扩展名，去掉它
-                        if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
-                            finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
-                        }
-                        
-                        // 如果符号链接目标带有.huff扩展名，去掉它
-                        if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
-                            finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
-                        }
                         
                         // 现在创建符号链接，使用修改后的目标路径
                         std::filesystem::path symlinkDestPath(unpackedRestoreFile);
@@ -403,19 +394,10 @@ bool RestoreTask::execute() {
                 return false;
             }
             
-            // 处理符号链接目标，去掉.enc和.huff扩展名
+            // 处理符号链接目标，保持原始文件名
+            // 不需要去掉.enc和.huff扩展名，因为备份时已经不添加这些扩展名了
             std::string symlinkTargetStr = originalSymlinkTarget.string();
             std::string finalSymlinkTarget = symlinkTargetStr;
-            
-            // 如果符号链接目标带有.enc扩展名，去掉它
-            if (finalSymlinkTarget.size() > 4 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 4) == ".enc") {
-                finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 4);
-            }
-            
-            // 如果符号链接目标带有.huff扩展名，去掉它
-            if (finalSymlinkTarget.size() > 5 && finalSymlinkTarget.substr(finalSymlinkTarget.size() - 5) == ".huff") {
-                finalSymlinkTarget = finalSymlinkTarget.substr(0, finalSymlinkTarget.size() - 5);
-            }
             
             // 现在创建符号链接，使用修改后的目标路径
             std::filesystem::path symlinkDestPath(currentDest);
