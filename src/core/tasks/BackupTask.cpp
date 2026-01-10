@@ -142,7 +142,7 @@ bool BackupTask::execute() {
                     // 目标是源目录中的文件，计算相对路径
                     std::string relativeTarget = FileSystem::getRelativePath(absoluteTargetPath.string(), sourcePath);
                     // 检查目标文件是否是普通文件，如果是，并且启用了压缩，那么需要添加.huff扩展名
-                    std::filesystem::path targetFilePath = sourcePath / relativeTarget;
+                    std::filesystem::path targetFilePath = std::filesystem::path(sourcePath) / relativeTarget;
                     if (std::filesystem::is_regular_file(targetFilePath, ec)) {
                         // 目标是普通文件，需要检查是否需要添加.huff扩展名和.enc扩展名
                         finalSymlinkTarget = relativeTarget;
