@@ -315,7 +315,16 @@ fs::path File::getRelativePath(const fs::path& base) const {
         // 直接获取相对于base的路径，确保返回的是符号链接本身的路径
         // 使用filesystem::relative函数，它能正确处理相对路径
         fs::path baseAbs = fs::absolute(base);
-        fs::path fileAbs = fs::absolute(this->filePath);
+        fs::path fileAbs;
+        
+        // 对于符号链接，使用原始路径，不解析链接目标
+        if (this->isSymbolicLink()) {
+            // 获取符号链接本身的绝对路径，不解析链接
+            fileAbs = fs::canonical(this->filePath.parent_path()) / this->filePath.filename();
+        } else {
+            // 对于普通文件，使用正常的绝对路径
+            fileAbs = fs::absolute(this->filePath);
+        }
         
         // 使用std::filesystem::relative函数计算相对路径
         return fs::relative(fileAbs, baseAbs);
