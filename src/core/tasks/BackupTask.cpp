@@ -189,13 +189,15 @@ bool BackupTask::execute() {
             
             // 现在创建符号链接，使用修改后的目标路径
             std::filesystem::path symlinkDestPath(backupFile);
-            // 先删除可能存在的目标文件
-            if (std::filesystem::exists(symlinkDestPath, ec)) {
-                std::filesystem::remove(symlinkDestPath, ec);
-            }
-            // 创建符号链接
+            // 直接创建或更新符号链接，不删除已存在的文件
+            // 这样当软链接和目标文件同时存在时，软链接会优先被创建，而真实文件会在之后被处理
+            // 但要确保真实文件的处理不会覆盖软链接
+            // 由于我们已经修改了文件排序，软链接会先被处理，然后是真实文件
+            // 所以这里可以安全地创建符号链接，不需要删除已存在的文件
             std::filesystem::create_symlink(finalSymlinkTarget, symlinkDestPath, ec);
-            if (ec) {
+            // 如果创建失败，检查错误码
+            if (ec && ec.value() != static_cast<int>(std::errc::file_exists)) {
+                // 只有当错误不是文件已存在时，才返回失败
                 logger->error("Failed to create symlink: " + backupFile);
                 status = TaskStatus::FAILED;
                 return false;

@@ -134,12 +134,10 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     if (fs::is_regular_file(link_status)) {
         
         // 普通文件
-        // 检查目标文件是否是符号链接，如果是则先删除
+        // 检查目标文件是否是符号链接，如果是则跳过复制，保留符号链接
         if (fs::is_symlink(destPath, ec)) {
-            fs::remove(destPath, ec);
-            if (ec) {
-                return false;
-            }
+            // 目标已存在且是符号链接，保留符号链接，跳过复制
+            return true;
         }
         
         // 检查目标文件是否存在
@@ -169,12 +167,10 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
     } else if (fs::is_directory(link_status)) {
         
         // 目录 - 只需要创建，内容会在遍历时处理
-        // 检查目标文件是否是符号链接，如果是则先删除
+        // 检查目标文件是否是符号链接，如果是则跳过，保留符号链接
         if (fs::is_symlink(destPath, ec)) {
-            fs::remove(destPath, ec);
-            if (ec) {
-                return false;
-            }
+            // 目标已存在且是符号链接，保留符号链接，跳过目录创建
+            return true;
         }
         
         if (!fs::exists(destPath, ec)) {
@@ -258,19 +254,20 @@ std::vector<File> FileSystem::getAllFiles(const std::string& directory) {
         collectEmptyDirs(directory);
         
         // 确保符号链接被正确处理，不被其他文件类型覆盖
-        // 按文件类型排序：真实文件 -> 目录 -> 符号链接 -> 其他类型
+        // 按文件类型排序：符号链接 -> 真实文件 -> 目录 -> 其他类型
+        // 符号链接优先处理，避免真实文件覆盖符号链接
         std::sort(files.begin(), files.end(), [](const File& a, const File& b) {
-            // 真实文件优先级最高
+            // 符号链接优先级最高
+            if (a.isSymbolicLink() && !b.isSymbolicLink()) return true;
+            if (!a.isSymbolicLink() && b.isSymbolicLink()) return false;
+            
+            // 然后是真实文件
             if (a.isRegularFile() && !b.isRegularFile()) return true;
             if (!a.isRegularFile() && b.isRegularFile()) return false;
             
             // 然后是目录
             if (a.isDirectory() && !b.isDirectory()) return true;
             if (!a.isDirectory() && b.isDirectory()) return false;
-            
-            // 然后是符号链接
-            if (a.isSymbolicLink() && !b.isSymbolicLink()) return true;
-            if (!a.isSymbolicLink() && b.isSymbolicLink()) return false;
             
             // 最后按路径排序
             return a.getFilePath().string() < b.getFilePath().string();
