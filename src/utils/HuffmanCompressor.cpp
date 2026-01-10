@@ -9,6 +9,9 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+// 初始化HuffmanNode的静态计数器
+unsigned int HuffmanNode::nextId = 0;
+
 HuffmanCompressor::HuffmanCompressor() : root(nullptr) {}
 
 HuffmanCompressor::~HuffmanCompressor() {

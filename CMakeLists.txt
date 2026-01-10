@@ -10,18 +10,14 @@ else()
     add_compile_options(-finput-charset=UTF-8)
     message(STATUS "Enabled GCC/Clang UTF-8 code compile")
 endif()
+enable_testing()
 
 # === 打包配置 ===
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
 
-# === 设置 C++ 标准 ===
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# === Google Test 配置 ===
-# 使用 FetchContent 自动下载 GoogleTest（推荐方式）
+# Google Test配置
 include(FetchContent)
 FetchContent_Declare(
     googletest
@@ -29,48 +25,28 @@ FetchContent_Declare(
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-# 只在 Windows 上设置这个选项
 if(WIN32)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
 
-# 下载 GoogleTest
-FetchContent_MakeAvailable(googletest)
+find_package(GTest REQUIRED)
 
-# 诊断信息 - 修复后的版本
-message(STATUS "=== Google Test 诊断信息 ===")
-
-# 检查 FetchContent 提供的目标
+# 诊断信息
+message(STATUS "=== Google Test诊断信息 ===")
 if(TARGET gtest)
-    message(STATUS "✓ 找到 FetchContent 目标: gtest")
+    message(STATUS "找到目标: gtest")
+    get_target_property(GTEST_INCLUDES gtest INTERFACE_INCLUDE_DIRECTORIES)
+    message(STATUS "gtest包含目录: ${GTEST_INCLUDES}")
 endif()
 
-if(TARGET gtest_main)
-    message(STATUS "✓ 找到 FetchContent 目标: gtest_main")
+if(TARGET GTest::gtest)
+    message(STATUS "找到目标: GTest::gtest")
 endif()
 
-if(TARGET gmock)
-    message(STATUS "✓ 找到 FetchContent 目标: gmock")
-endif()
+# 项目配置...
+set(CMAKE_CXX_STANDARD 17)
 
-if(TARGET gmock_main)
-    message(STATUS "✓ 找到 FetchContent 目标: gmock_main")
-endif()
-
-# 注意：不要使用 find_package(GTest REQUIRED)，这会和 FetchContent 冲突
-
-# === 测试目标配置 ===
-# 创建测试目标列表
-set(TEST_TARGETS
-    FilterTests
-    FileTests
-    EncryptionTests
-    FilePackagerTests
-    HuffmanCompressorTests
-    BackupManagerTests
-    TaskTests
-)
-
+# 测试目标
 # FilterTests
 add_executable(FilterTests 
     src/FilterTests.cpp
@@ -140,7 +116,7 @@ add_executable(BackupManagerTests
 )
 target_include_directories(BackupManagerTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# TaskTests (需要 gmock)
+# TaskTests (需要gmock)
 add_executable(TaskTests 
     src/TaskTests.cpp
     src/core/tasks/BackupTask.cpp 
@@ -156,55 +132,58 @@ add_executable(TaskTests
 )
 target_include_directories(TaskTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# === 配置测试目标链接 ===
-enable_testing()
-
-# 查找 OpenSSL（所有测试目标共享）
-find_package(OpenSSL REQUIRED)
-if(OPENSSL_FOUND)
-    message(STATUS "✓ 找到 OpenSSL: ${OPENSSL_VERSION}")
-else()
-    message(FATAL_ERROR "✗ OpenSSL 未找到，请安装 OpenSSL")
-endif()
-
-# 查找线程库
-find_package(Threads REQUIRED)
+# 关键修复：使用正确的目标名称
+set(TEST_TARGETS FilterTests FileTests EncryptionTests FilePackagerTests TaskTests HuffmanCompressorTests BackupManagerTests)
 
 foreach(test_target IN LISTS TEST_TARGETS)
-    message(STATUS "配置测试目标: ${test_target}")
-    
-    # === 链接 GoogleTest ===
-    if(${test_target} STREQUAL "TaskTests")
-        # TaskTests 需要 GMock
-        target_link_libraries(${test_target} PRIVATE gmock)
-        message(STATUS "  - 链接到 gmock (包含 gtest)")
+    if(TARGET gtest)
+        if(${test_target} STREQUAL "TaskTests")
+            target_link_libraries(${test_target} PRIVATE gtest gtest_main gmock gmock_main)
+            message(STATUS "链接 ${test_target} 到 gtest gtest_main gmock gmock_main")
+        else()
+            target_link_libraries(${test_target} PRIVATE gtest gtest_main)
+            message(STATUS "链接 ${test_target} 到 gtest gtest_main")
+        endif()
+    elseif(TARGET GTest::gtest)
+        if(${test_target} STREQUAL "TaskTests")
+            target_link_libraries(${test_target} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+            message(STATUS "链接 ${test_target} 到 GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main")
+        else()
+            target_link_libraries(${test_target} PRIVATE GTest::gtest GTest::gtest_main)
+            message(STATUS "链接 ${test_target} 到 GTest::gtest GTest::gtest_main")
+        endif()
     else()
-        # 其他测试只需要 GTest
-        target_link_libraries(${test_target} PRIVATE gtest gtest_main)
-        message(STATUS "  - 链接到 gtest 和 gtest_main")
+        # 手动设置包含目录作为最后手段
+        message(WARNING "未找到标准目标，尝试手动配置 ${test_target}")
+        target_include_directories(${test_target} PRIVATE ${gtest_SOURCE_DIR}/googletest/include)
+        target_link_libraries(${test_target} PRIVATE ${gtest_BINARY_DIR}/libgtest.a)
+        if(${test_target} STREQUAL "TaskTests")
+            target_include_directories(${test_target} PRIVATE ${gtest_SOURCE_DIR}/googlemock/include)
+            target_link_libraries(${test_target} PRIVATE ${gtest_BINARY_DIR}/libgmock.a)
+        endif()
     endif()
     
-    # === 链接 OpenSSL ===
-    target_include_directories(${test_target} PRIVATE ${OPENSSL_INCLUDE_DIR})
-    target_link_libraries(${test_target} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-    message(STATUS "  - 链接到 OpenSSL")
+    # 为所有测试目标链接OpenSSL和Threads
+    find_package(OpenSSL REQUIRED)
+    if(OPENSSL_FOUND)
+        target_include_directories(${test_target} PRIVATE ${OPENSSL_INCLUDE_DIR})
+        target_link_libraries(${test_target} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+    endif()
     
-    # === 链接线程库 ===
+    find_package(Threads REQUIRED)
     target_link_libraries(${test_target} PRIVATE Threads::Threads)
-    message(STATUS "  - 链接到线程库")
     
-    # === 链接 filesystem 库 ===
+    # 链接filesystem库（非MSVC平台需要）
     if(NOT MSVC)
         target_link_libraries(${test_target} PRIVATE stdc++fs)
-        message(STATUS "  - 链接到 stdc++fs")
     endif()
     
-    # === 注册测试 ===
+    # 注册测试
     add_test(NAME ${test_target} COMMAND ${test_target})
-    message(STATUS "  - 已注册为测试: ${test_target}")
+    message(STATUS "已添加测试: ${test_target}")
 endforeach()
 
-# === 主应用程序目标 ===
+# 主应用程序目标
 add_executable(BackupHelper
     src/main.cpp
     src/core/BackupEngine.cpp
@@ -224,21 +203,21 @@ add_executable(BackupHelper
 
 target_include_directories(BackupHelper PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# 主程序也链接相同的库
-target_link_libraries(BackupHelper PRIVATE Threads::Threads)
+# 查找并链接OpenSSL库
+find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
+    message(STATUS "OpenSSL found: ${OPENSSL_VERSION}")
     target_include_directories(BackupHelper PRIVATE ${OPENSSL_INCLUDE_DIR})
     target_link_libraries(BackupHelper PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+else()
+    message(FATAL_ERROR "OpenSSL not found. Please install OpenSSL.")
 endif()
+
+# 链接线程库
+find_package(Threads REQUIRED)
+target_link_libraries(BackupHelper PRIVATE Threads::Threads)
+
+# 链接filesystem库（非MSVC平台需要）
 if(NOT MSVC)
     target_link_libraries(BackupHelper PRIVATE stdc++fs)
 endif()
-
-message(STATUS "")
-message(STATUS "=== 配置总结 ===")
-message(STATUS "项目: ${PROJECT_NAME}")
-message(STATUS "C++ 标准: ${CMAKE_CXX_STANDARD}")
-message(STATUS "测试目标数量: ${TEST_TARGETS}")
-message(STATUS "使用 GoogleTest: 通过 FetchContent 下载")
-message(STATUS "OpenSSL: ${OPENSSL_VERSION}")
-message(STATUS "配置完成！")

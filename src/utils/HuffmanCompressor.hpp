@@ -30,8 +30,7 @@ struct HuffmanNode {
     }
 };
 
-// 初始化静态计数器
-unsigned int HuffmanNode::nextId = 0;
+
 
 // 比较器，用于优先队列，确保Huffman树构建唯一
 struct Compare {
