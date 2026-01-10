@@ -95,12 +95,34 @@ void File::initialize(const fs::path& path) {
             }
         }
         
-        // 直接使用当前时间作为时间戳，避免文件系统时间戳精度问题
-        // 这也能确保每次创建File对象时，时间戳都是唯一的，便于测试
-        auto now = std::chrono::system_clock::now();
-        this->creationTime = now;
-        this->lastModifiedTime = now;
-        this->lastAccessTime = now;
+        // 从文件系统获取实际的时间戳
+        try {
+            // 获取文件的最后修改时间
+            std::error_code ec2;
+            auto ftime = fs::last_write_time(path, ec2);
+            if (!ec2) {
+                // 将文件时间转换为system_clock::time_point
+                // 处理不同平台的时间类型差异
+                auto fileTimePoint = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                    ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
+                
+                this->lastModifiedTime = fileTimePoint;
+                this->lastAccessTime = fileTimePoint;
+                this->creationTime = fileTimePoint;
+            } else {
+                // 如果获取失败，使用当前时间作为默认时间戳
+                auto now = std::chrono::system_clock::now();
+                this->creationTime = now;
+                this->lastModifiedTime = now;
+                this->lastAccessTime = now;
+            }
+        } catch (const std::exception&) {
+            // 如果转换失败，使用当前时间作为默认时间戳
+            auto now = std::chrono::system_clock::now();
+            this->creationTime = now;
+            this->lastModifiedTime = now;
+            this->lastAccessTime = now;
+        }
         
     } catch (const std::exception& e) {
         std::cerr << "Error initializing file: " << e.what() << std::endl; 
@@ -291,15 +313,12 @@ bool File::isSocket() const {
 fs::path File::getRelativePath(const fs::path& base) const {
     try {
         // 直接获取相对于base的路径，确保返回的是符号链接本身的路径
-        // 使用make_relative辅助函数，避免解析符号链接
-        fs::path baseAbs = fs::canonical(base);
-        fs::path fileAbs = fs::canonical(this->filePath.parent_path());
+        // 使用filesystem::relative函数，它能正确处理相对路径
+        fs::path baseAbs = fs::absolute(base);
+        fs::path fileAbs = fs::absolute(this->filePath);
         
-        // 计算父目录的相对路径
-        fs::path relativeDir = fileAbs.lexically_relative(baseAbs);
-        
-        // 添加文件名，确保符号链接的名字被保留
-        return relativeDir / this->filePath.filename();
+        // 使用std::filesystem::relative函数计算相对路径
+        return fs::relative(fileAbs, baseAbs);
     } catch (const std::exception& ) {
         // 如果计算相对路径失败（如循环链接），则使用文件名作为相对路径
         return this->filePath.filename();

@@ -7,6 +7,7 @@
 #include <functional>
 #include <algorithm>
 #include <iomanip>
+#include <sstream>
 
 // 跨平台头文件包含
 #ifdef _WIN32
@@ -141,6 +142,19 @@ bool FileSystem::copyFile(const std::string& source, const std::string& destinat
             }
         }
         
+        // 检查目标文件是否存在
+        if (fs::exists(destPath, ec) && !ec) {
+            // 目标文件存在，比较文件内容是否相同
+            std::string sourceHash = calculateFileHash(source);
+            std::string destHash = calculateFileHash(destination);
+            
+            if (!sourceHash.empty() && !destHash.empty() && sourceHash == destHash) {
+                // 文件内容相同，不需要复制
+                return true;
+            }
+        }
+        
+        // 目标文件不存在或内容不同，执行复制
         if (!fs::copy_file(source, destination, fs::copy_options::overwrite_existing | fs::copy_options::copy_symlinks, ec)) {
             return false;
         }
@@ -303,10 +317,17 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
     // 检查压缩效率
     uint64_t compressedSize = getFileSize(destination);
     
-    // 如果压缩后的文件没有变小，删除压缩文件并返回false
-    // 让调用者决定如何处理，避免将原始文件复制到.huff文件中
+    // 如果压缩后的文件没有变小，输出警告信息并删除压缩文件
     if (compressedSize >= originalSize) {
-        std::filesystem::remove(destination);
+        std::cerr << "Warning: Compressed file is not smaller than original file. "
+                  << "Original size: " << originalSize << " bytes, "
+                  << "Compressed size: " << compressedSize << " bytes. "
+                  << "File: " << source << std::endl;
+        
+        // 删除压缩文件
+        std::error_code ec;
+        fs::remove(destination, ec);
+        
         return false;
     }
     
@@ -326,6 +347,7 @@ bool FileSystem::compressFile(const std::string& source, const std::string& dest
         // 静默处理元数据复制异常
     }
     
+    // 压缩成功且文件变小，返回true
     return true;
 }
 
@@ -497,3 +519,33 @@ bool FileSystem::copyDirectory(const std::string& sourceDir, const std::string& 
     
     return !ec;
 }
+
+// 计算文件的哈希值，用于检测文件内容是否变化
+// 使用文件大小和修改时间的组合，简单高效
+std::string FileSystem::calculateFileHash(const std::string& filePath) {
+    std::error_code ec;
+    
+    // 检查文件是否存在
+    if (!fs::exists(filePath, ec)) {
+        return "";
+    }
+    
+    // 获取文件大小
+    auto fileSize = fs::file_size(filePath, ec);
+    if (ec) {
+        return "";
+    }
+    
+    // 获取文件最后修改时间
+    auto lastWriteTime = fs::last_write_time(filePath, ec);
+    if (ec) {
+        return "";
+    }
+    
+    // 将文件大小和修改时间组合成一个字符串作为哈希值
+    std::stringstream ss;
+    ss << fileSize << ":" << lastWriteTime.time_since_epoch().count();
+    
+    return ss.str();
+}
+

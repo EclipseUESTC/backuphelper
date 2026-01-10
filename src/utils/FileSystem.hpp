@@ -53,4 +53,7 @@ public:
     
     // 复制目录（递归）
     static bool copyDirectory(const std::string& sourceDir, const std::string& destDir);
+    
+    // 计算文件的哈希值，用于检测文件内容是否变化
+    static std::string calculateFileHash(const std::string& filePath);
 };

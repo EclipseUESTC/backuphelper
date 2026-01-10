@@ -161,6 +161,11 @@ bool TypeFilter::isTypeIncluded(const std::string& type) const {
 
 bool TypeFilter::match(const File& file) const 
 {
+    // 如果没有设置包含的类型，则匹配所有文件
+    if (includedTypes.empty()) {
+        return true;
+    }
+    
     const fs::file_type& fileType = file.getFileType();
     std::string typeStr = fileTypeToString(fileType);
     return isTypeIncluded(typeStr);

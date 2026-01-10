@@ -108,7 +108,7 @@ const TimerBackupConfig& TimerBackupManager::getConfig() const {
 }
 
 bool TimerBackupManager::executeBackup() {
-    logger->info("Timer backup triggered.");
+    logger->debug("Timer backup triggered.");
     
     try {
         // 检查是否已被停止或中断
@@ -125,8 +125,8 @@ bool TimerBackupManager::executeBackup() {
         
         // 检查源目录是否存在
         if (!FileSystem::exists(localConfig.sourceDir)) {
-            logger->error("Source directory not found: " + localConfig.sourceDir);
-            logger->error("Skipping backup, will try again after interval.");
+            logger->warn("Source directory not found: " + localConfig.sourceDir);
+            logger->warn("Skipping backup, will try again after interval.");
             return false;
         }
         

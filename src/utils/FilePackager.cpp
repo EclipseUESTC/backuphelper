@@ -32,16 +32,21 @@ FileMetadata::FileMetadata(const File& file, const std::filesystem::path& basePa
     this->permissions = file.getPermissions();
     
     // Time stamps
-        auto toUnixTime = [](const std::chrono::system_clock::time_point& tp) {
-            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
-                tp.time_since_epoch()
-            ).count();
-            // 确保时间戳为正数，避免uint64_t溢出导致1901年问题
-            return seconds > 0 ? static_cast<uint64_t>(seconds) : 0;
-        };
-        this->creationTime = toUnixTime(file.getCreationTime());
-        this->lastModifiedTime = toUnixTime(file.getLastModifiedTime());
-        this->lastAccessTime = toUnixTime(file.getLastAccessTime());
+    // 将system_clock::time_point直接转换为Unix时间戳（秒）
+    // Unix时间戳是从1970-01-01 00:00:00 UTC开始的秒数
+    auto toUnixTime = [](const std::chrono::system_clock::time_point& tp) {
+        // 使用duration_cast将time_point转换为秒
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
+            tp.time_since_epoch()
+        ).count();
+        // 确保时间戳为正数，避免uint64_t溢出导致1901年问题
+        return seconds > 0 ? static_cast<uint64_t>(seconds) : 0;
+    };
+    
+    // 分别获取创建时间、最后修改时间和最后访问时间
+    this->creationTime = toUnixTime(file.getCreationTime());
+    this->lastModifiedTime = toUnixTime(file.getLastModifiedTime());
+    this->lastAccessTime = toUnixTime(file.getLastAccessTime());
     
     // File type
     if (file.isRegularFile()) {
@@ -366,51 +371,58 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
             // 普通文件、目录和符号链接都需要恢复时间戳
             if (fileMeta.fileType == 0 || fileMeta.fileType == 1 || fileMeta.fileType == 2) {  // 普通文件、目录和符号链接
                 try {
-                    // 将Unix时间戳转换为time_t
-                    uint64_t unixTime = fileMeta.lastModifiedTime;
-                    time_t timestamp = static_cast<time_t>(unixTime);
-                    
                     // 确保时间戳有效（避免1901年问题）
-                    if (unixTime == 0) {
-                        // 如果时间戳为0（1970-01-01），使用当前时间作为默认值
-                        timestamp = time(nullptr);
-                    }
+                    // 转换Unix时间戳为time_t，Unix时间戳已经是UTC时间，不需要再转换
+                    time_t creationTime = static_cast<time_t>(fileMeta.creationTime);
+                    time_t lastAccessTime = static_cast<time_t>(fileMeta.lastAccessTime);
+                    time_t lastModifiedTime = static_cast<time_t>(fileMeta.lastModifiedTime);
+                    
+                    // 如果时间戳为0（1970-01-01），使用当前时间作为默认值
+                    if (fileMeta.creationTime == 0) creationTime = time(nullptr);
+                    if (fileMeta.lastAccessTime == 0) lastAccessTime = time(nullptr);
+                    if (fileMeta.lastModifiedTime == 0) lastModifiedTime = time(nullptr);
                     
                     #ifdef _WIN32
                         // Windows平台实现：使用Windows API直接设置文件时间
                         HANDLE hFile = CreateFileA(outputPath.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, 
                                                  OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
                         if (hFile != INVALID_HANDLE_VALUE) {
+                            FILETIME ftCreation, ftAccess, ftWrite;
                             SYSTEMTIME st;
-                            FILETIME ft;
-                            tm tm_local;
                             
-                            // 使用localtime_s确保线程安全，并检查返回值
-                            errno_t err = localtime_s(&tm_local, &timestamp);
-                            if (err == 0) {
-                                // 填充SYSTEMTIME结构体
-                                st.wYear = tm_local.tm_year + 1900;
-                                st.wMonth = tm_local.tm_mon + 1;
-                                st.wDay = tm_local.tm_mday;
-                                st.wHour = tm_local.tm_hour;
-                                st.wMinute = tm_local.tm_min;
-                                st.wSecond = tm_local.tm_sec;
-                                st.wMilliseconds = 0;
-                                
-                                // 转换为FILETIME并设置文件时间
-                                if (SystemTimeToFileTime(&st, &ft)) {
-                                    // 设置所有时间：创建时间、访问时间和修改时间
-                                    SetFileTime(hFile, &ft, &ft, &ft);
-                                }
-                            }
+                            // 将时间戳直接转换为FILETIME，不经过localtime_s，避免时区问题
+                            // Unix时间戳是从1970-01-01 00:00:00 UTC开始的秒数
+                            // FILETIME是从1601-01-01 00:00:00 UTC开始的100纳秒间隔数
+                            const uint64_t FILETIME_EPOCH_DIFF = 11644473600ULL; // 1970-01-01到1601-01-01的秒数
+                            
+                            // 转换创建时间
+                            uint64_t creationFileTime = (static_cast<uint64_t>(creationTime) + FILETIME_EPOCH_DIFF) * 10000000ULL;
+                            ftCreation.dwLowDateTime = static_cast<DWORD>(creationFileTime);
+                            ftCreation.dwHighDateTime = static_cast<DWORD>(creationFileTime >> 32);
+                            
+                            // 转换访问时间
+                            uint64_t accessFileTime = (static_cast<uint64_t>(lastAccessTime) + FILETIME_EPOCH_DIFF) * 10000000ULL;
+                            ftAccess.dwLowDateTime = static_cast<DWORD>(accessFileTime);
+                            ftAccess.dwHighDateTime = static_cast<DWORD>(accessFileTime >> 32);
+                            
+                            // 转换修改时间
+                            uint64_t writeFileTime = (static_cast<uint64_t>(lastModifiedTime) + FILETIME_EPOCH_DIFF) * 10000000ULL;
+                            ftWrite.dwLowDateTime = static_cast<DWORD>(writeFileTime);
+                            ftWrite.dwHighDateTime = static_cast<DWORD>(writeFileTime >> 32);
+                            
+                            // 分别设置创建时间、访问时间和修改时间
+                            SetFileTime(hFile, &ftCreation, &ftAccess, &ftWrite);
+                            
                             CloseHandle(hFile);
                         }
                     #else
                         // Linux/Unix平台实现：使用utimensat函数直接设置文件时间
                         struct timespec times[2];
-                        times[0].tv_sec = timestamp;  // 访问时间(atime)
+                        
+                        // 设置访问时间和修改时间
+                        times[0].tv_sec = lastAccessTime;  // 访问时间(atime)
                         times[0].tv_nsec = 0;
-                        times[1].tv_sec = timestamp;  // 修改时间(mtime)
+                        times[1].tv_sec = lastModifiedTime;  // 修改时间(mtime)
                         times[1].tv_nsec = 0;
                         
                         // 使用utimensat函数设置文件时间，0表示使用当前工作目录
@@ -424,6 +436,9 @@ bool FilePackager::unpackFiles(const std::string& inputFile, const std::string& 
                             std::cerr << "Warning: Cannot set file times for " << outputPath 
                                       << " (" << strerror(errno) << ")" << std::endl;
                         }
+                        
+                        // 注意：Linux不支持直接设置文件创建时间，需要使用其他方法
+                        // 这里不处理创建时间，因为Linux上没有标准API支持
                     #endif
                     
                 } catch (const std::exception& e) {

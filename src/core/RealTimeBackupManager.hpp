@@ -8,6 +8,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <map>
 
 // 前向声明
 class FileSystemMonitor;
@@ -64,6 +65,13 @@ private:
     // 防抖机制
     std::atomic<long long> lastBackupTime;
     
+    // 文件哈希缓存，用于检测文件内容是否真正变化
+    std::map<std::string, std::string> fileHashCache;
+    std::mutex fileHashCacheMutex;
+    
+    // 是否有文件真正变化的标志
+    std::atomic<bool> filesChanged;
+    
     // 处理文件变化事件
     void processFileChange(const FileChangeEvent& event);
     
@@ -72,6 +80,12 @@ private:
     
     // 执行备份
     bool executeBackup();
+    
+    // 检查文件内容是否真正变化
+    bool checkIfFileChanged(const std::string& filePath);
+    
+    // 初始化文件哈希缓存
+    void initializeFileHashCache();
     
 public:
     RealTimeBackupManager(ILogger* log);
