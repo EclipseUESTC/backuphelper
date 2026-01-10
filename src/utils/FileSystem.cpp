@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <set>
 
 // 跨平台头文件包含
 #ifdef _WIN32
