@@ -221,8 +221,11 @@ bool BackupTask::execute() {
             return false;
         }
         
-        // 将备份后的实际文件路径添加到列表中
-        backedUpFiles.push_back(finalBackupFile);
+        // 将备份后的实际文件路径添加到列表中，但符号链接除外
+        // 符号链接不需要打包或加密，保持原样
+        if (!file.isSymbolicLink()) {
+            backedUpFiles.push_back(finalBackupFile);
+        }
         
         successCount++;
         totalSize += file.getFileSize();
